@@ -1,17 +1,20 @@
-import logo from './assets/bedreflyt-logo.webp';
 import './App.css';
+
+import React from 'react';
+import { Route, Routes } from 'react-router-dom';
+
 import CustomNavbar from './components/ui/navbar.tsx';
+import Home from './pages/home-page.tsx';
+import BedAllocation from './pages/bed-allocation.tsx';
 
 function App() {
   return (
     <div className="App">
       <CustomNavbar />
-      <header className="App-header">
-        <img src={logo} className="AppLogo" width="300" height="300" alt="logo" />
-        <p className="text-3xl font-bold underline">
-          Welcome to the BedreFlyt app!
-        </p>
-      </header>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/bed-allocation" element={<BedAllocation />} />
+      </Routes>
     </div>
   );
 }
