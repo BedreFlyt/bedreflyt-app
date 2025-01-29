@@ -1,22 +1,16 @@
-import logo from './logo.svg';
+import logo from './assets/bedreflyt-logo.webp';
 import './App.css';
+import CustomNavbar from './components/ui/navbar.tsx';
 
 function App() {
   return (
     <div className="App">
+      <CustomNavbar />
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
+        <img src={logo} className="AppLogo" width="300" height="300" alt="logo" />
+        <p className="text-3xl font-bold underline">
+          Welcome to the BedreFlyt app!
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
       </header>
     </div>
   );
