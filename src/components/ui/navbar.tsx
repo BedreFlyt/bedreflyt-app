@@ -1,6 +1,10 @@
 import React from 'react';
 import { Navbar, Nav, NavDropdown, Container } from 'react-bootstrap';
 
+import SearchIcon from '../../assets/icons/search-icon.webp';
+import BedIcon from '../../assets/icons/bed-icon.webp';
+import StaffIcon from '../../assets/icons/staff-icon.webp';
+
 const CustomNavbar = () => {
   return (
     <Navbar bg="dark" variant="dark" expand="lg">
@@ -16,9 +20,15 @@ const CustomNavbar = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link href="#dashboard">Dashboard</Nav.Link>
-            <Nav.Link href="#team">Team</Nav.Link>
-            <Nav.Link href="#projects">Projects</Nav.Link>
+            <Nav.Link href="#search">
+              <img src={SearchIcon} alt="Search" height="30" />
+            </Nav.Link>
+            <Nav.Link href="/bed-allocation">
+              <img src={BedIcon} alt="Beds" height="30" />
+            </Nav.Link>
+            <Nav.Link href="#staff-allocation">
+              <img src={StaffIcon} alt="Staff" height="30" />
+            </Nav.Link>
             <Nav.Link href="#calendar">Calendar</Nav.Link>
           </Nav>
           <Nav>
