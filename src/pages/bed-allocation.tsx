@@ -11,14 +11,14 @@ const BedAllocation = () => {
         id="uncontrolled-tab-example"
         className="mb-3"
       >
-        <Tab eventKey="home" title="Home">
-          Tab content for Home
+        <Tab eventKey="home" title="Allocation">
+          Tab content for Allocation
         </Tab>
-        <Tab eventKey="profile" title="Profile">
+        <Tab eventKey="profile" title="Simulation">
           <SimulationPanel />
         </Tab>
-        <Tab eventKey="contact" title="Contact" disabled>
-          Tab content for Contact
+        <Tab eventKey="contact" title="Something" disabled>
+          Tab content for Somethin
         </Tab>
       </Tabs>
     </Container>
