@@ -36,3 +36,39 @@
     transform: rotate(360deg);
   }
 }
+
+.sidebar-component {
+  background-color: #3a3a3a;
+}
+
+.sidebar-collapsed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 50px; /* Adjust the width as needed */
+  background-color: #3a3a3a; /* Background color to match the Offcanvas */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 1040; /* Ensure it is above other content */
+  padding: 10px;
+}
+
+.sidebar-collapsed .btn {
+  margin-bottom: 20px;
+  width: 100%;
+  height: 50px; /* Adjust the height as needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-collapsed .nav-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+}
