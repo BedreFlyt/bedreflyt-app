@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { SimulationRequest, MultiSimulationRequest } from '../types/types.ts';
 
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
 const baseUrl = process.env.BASE_URL || 'localhost';
@@ -61,7 +62,17 @@ export const getDiagnosisData = () => {
   return fetchData(url);
 }
 
-export const postSimulationScenario = () => {
+export const postSimulationScenario = (simulationRequest: SimulationRequest) => {
   const url = 'http://' + baseUrl + ':8090/api/simulation/simulate';
-  return axios.post(url);
+  return axios.post(url, simulationRequest);
+}
+
+export const postSimulationScenarioGlobal = (simulationRequest: SimulationRequest) => {
+  const url = 'http://' + baseUrl + ':8090/api/simulation/simulate-global';
+  return axios.post(url, simulationRequest);
+}
+
+export const postMultiSimulationScenario = (simulationRequest: MultiSimulationRequest) => {
+  const url = 'http://' + baseUrl + ':8090/api/simulation/simulate-many';
+  return axios.post(url, simulationRequest);
 }
