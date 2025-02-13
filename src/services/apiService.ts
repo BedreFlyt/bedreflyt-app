@@ -22,7 +22,6 @@ const fetchData = async (url: string) => {
   } catch (e) {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
       console.warn('LocalStorage quota exceeded. Consider clearing some space.');
-      // Optionally, you can implement a strategy to clear old cache items here
     } else {
       throw e;
     }
@@ -36,6 +35,11 @@ export const getPatientData = async () => {
   const response = await axios.get(url);
   return response.data;
 };
+
+export const getPatientAllocationData = () => {
+  const url = 'http://' + baseUrl + ':8090/api/patient-allocation/retrieve';
+  return fetchData(url);
+}
 
 export const getTreatmentData = () => {
   const url = 'http://' + baseUrl + ':8090/api/fuseki/treatment/retrieve';
@@ -55,4 +59,9 @@ export const getTaskData = () => {
 export const getDiagnosisData = () => {
   const url = 'http://' + baseUrl + ':8090/api/fuseki/diagnosis/retrieve';
   return fetchData(url);
+}
+
+export const postSimulationScenario = () => {
+  const url = 'http://' + baseUrl + ':8090/api/simulation/simulate';
+  return axios.post(url);
 }
