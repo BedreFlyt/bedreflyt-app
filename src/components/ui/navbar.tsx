@@ -3,7 +3,7 @@ import { Navbar, Nav, NavDropdown, Container } from 'react-bootstrap';
 
 const CustomNavbar = () => {
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" style={{ paddingLeft: "65px" }}>
+    <Navbar bg="dark" variant="dark" expand="lg" style={{ paddingLeft: "110px" }}>
       <Container>
         <Navbar.Brand href="#home">
           <img
