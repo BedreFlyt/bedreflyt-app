@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navbar, Nav, NavDropdown, Container } from 'react-bootstrap';
+import Logo from '../../assets/bedreflyt-logo.webp';
 
 const CustomNavbar = () => {
   return (
@@ -7,11 +8,12 @@ const CustomNavbar = () => {
       <Container>
         <Navbar.Brand href="#home">
           <img
-            src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
-            height="30"
+            src={Logo}
+            height="60"
             className="d-inline-block align-top"
             alt="Bedreflyt DT"
           />
+          <span style={{ fontSize: "1.7em", padding: "10px" }}>BedreFlyt DT</span>
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
