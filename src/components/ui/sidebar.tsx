@@ -12,7 +12,7 @@ const CustomSidebar = () => {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className={`sidebar ${expanded ? "expanded" : "collapsed"}`}>
+    <aside className={`sidebar ${expanded ? "expanded" : "collapsed"}`}>
       {/* Toggle Button */}
       <Button
         variant="dark"
@@ -77,7 +77,7 @@ const CustomSidebar = () => {
           display: ${expanded ? "inline" : "none"};
         }
       `}</style>
-    </div>
+    </aside>
   );
 }
 
