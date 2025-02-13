@@ -67,3 +67,22 @@ export const treatmentColumns = [
   { header: "Frequency", accessor: "frequency" },
   { header: "Weight", accessor: "weight" }
 ]
+
+export type ScenarioRequest = {
+  batch: number;
+  patientId: string;
+  diagnosis: string;
+}
+
+export type SimulationRequest = {
+  scenario: ScenarioRequest[];
+  mode: string;
+  smtMode?: string;
+}
+
+export type MultiSimulationRequest = {
+  scenario: ScenarioRequest[];
+  repetitions: number;
+  risk: number;
+  smtMode: string;
+}
