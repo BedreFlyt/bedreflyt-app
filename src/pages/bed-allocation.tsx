@@ -1,18 +1,22 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Tabs, Tab } from "react-bootstrap";
 
 import SimulationPanel from "../components/ui/bed-simulation.tsx";
+import AllocationPanel from "../components/ui/bed-allocation.tsx";
 
 import { getPatientData, getTreatmentData } from "../services/apiService.ts";
 
 const BedAllocation = () => {
+  const [patients, setPatients] = useState([]);
+  const [treatments, setTreatments] = useState([]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const patientData = await getPatientData();
         const treatmentData = await getTreatmentData();
-        console.log("Patient Data:", patientData);
-        console.log("Treatment Data:", treatmentData);
+        setPatients(patientData);
+        setTreatments(treatmentData);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -29,7 +33,10 @@ const BedAllocation = () => {
         className="mb-3"
       >
         <Tab eventKey="home" title="Allocation">
-          Tab content for Allocation
+          <AllocationPanel
+            availablePatients={patients}
+            treatments={treatments}
+          />
         </Tab>
         <Tab eventKey="profile" title="Simulation">
           <SimulationPanel />
