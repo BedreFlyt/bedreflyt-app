@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Navbar, Button, Nav } from "react-bootstrap";
+import { Button, Nav } from "react-bootstrap";
 
 import SearchIcon from '../../assets/icons/bedreflyt-icon-search.webp';
 import BedIcon from '../../assets/icons/bedreflyt-icon-bed.webp';
