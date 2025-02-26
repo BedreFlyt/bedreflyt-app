@@ -35,7 +35,7 @@ const BedAllocation = () => {
           <SimulationPanel />
         </Tab>
         <Tab eventKey="contact" title="Something" disabled>
-          Tab content for Somethin
+          Tab content for Something
         </Tab>
       </Tabs>
     </Container>
