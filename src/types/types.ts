@@ -86,3 +86,17 @@ export type MultiSimulationRequest = {
   risk: number;
   smtMode: string;
 }
+
+export type WardRoom = {
+  patients: Patient[];
+  gender: string;
+}
+
+export type DayAllocation = {
+  [key: string]: WardRoom;
+}
+
+export type SimulationResponse = {
+  allocations: DayAllocation[];
+  changes: number;
+}
