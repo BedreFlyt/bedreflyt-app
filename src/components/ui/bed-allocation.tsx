@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Form, InputGroup, ListGroup, Card, Modal, Pagination } from "react-bootstrap";
+import { Button, Form, InputGroup, ListGroup, Card, Modal } from "react-bootstrap";
 import { FaPlus, FaTrash, FaSearch } from "react-icons/fa";
 
 import { Patient, Treatment } from "../../types/types";
@@ -25,7 +25,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null);
+  const [setSelectedTreatment] = useState<Treatment | null>(null);
   const [showTreatmentSelect, setShowTreatmentSelect] = useState(false);
 
   const filteredPatients = availablePatients.filter(patient => 

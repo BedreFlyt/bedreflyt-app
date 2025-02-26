@@ -1,5 +1,5 @@
-import React, { useState, JSX } from "react";
-import { Table, Pagination } from "react-bootstrap";
+import React, { useState } from "react";
+import { Table } from "react-bootstrap";
 import CustomPagination from "./custom-pagination.tsx";
 
 interface Column {
@@ -21,10 +21,6 @@ const GenericTable = <T,>({ data, columns, itemsPerPage = 10 }: GenericTableProp
   const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
-
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
 
   return (
     <>
