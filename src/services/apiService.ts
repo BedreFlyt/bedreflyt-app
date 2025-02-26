@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SimulationRequest, MultiSimulationRequest } from '../types/types.ts';
+import { SimulationRequest, MultiSimulationRequest, SimulationResponse, DayAllocation } from '../types/types.ts';
 
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
 const baseUrl = process.env.BASE_URL || 'localhost';
@@ -62,17 +62,45 @@ export const getDiagnosisData = () => {
   return fetchData(url);
 }
 
-export const postSimulationScenario = (simulationRequest: SimulationRequest) => {
+const transformSimulationResponse = (response: any): SimulationResponse => {
+  const allocations = response.data.allocations.slice(1).map((dayAllocation: any[]) => {
+    const transformedDay: DayAllocation = {};
+    
+    // Process all rooms in the day allocation
+    dayAllocation.forEach((roomContainer: any, index: number) => {
+      // Get the first (and only) key-value pair from the room container
+      const roomKey = Object.keys(roomContainer)[0];
+      const roomObj = roomContainer[roomKey];
+      
+      transformedDay[index] = {
+        gender: roomObj.gender || "Unknown",
+        patients: roomObj.patients || []
+      };
+    });
+
+    return transformedDay;
+  });
+
+  return {
+    allocations: allocations,
+    changes: response.data.changes || 0
+  };
+};
+
+export const postSimulationScenario = async (simulationRequest: SimulationRequest): Promise<SimulationResponse> => {
   const url = 'http://' + baseUrl + ':8090/api/simulation/simulate';
-  return axios.post(url, simulationRequest);
+  const response = await axios.post(url, simulationRequest);
+  return transformSimulationResponse(response);
 }
 
-export const postSimulationScenarioGlobal = (simulationRequest: SimulationRequest) => {
+export const postSimulationScenarioGlobal = async (simulationRequest: SimulationRequest): Promise<SimulationResponse> => {
   const url = 'http://' + baseUrl + ':8090/api/simulation/simulate-global';
-  return axios.post(url, simulationRequest);
+  const response = await axios.post(url, simulationRequest);
+  return transformSimulationResponse(response);
 }
 
-export const postMultiSimulationScenario = (simulationRequest: MultiSimulationRequest) => {
+export const postMultiSimulationScenario = async (simulationRequest: MultiSimulationRequest): Promise<SimulationResponse> => {
   const url = 'http://' + baseUrl + ':8090/api/simulation/simulate-many';
-  return axios.post(url, simulationRequest);
+  const response = await axios.post(url, simulationRequest);
+  return transformSimulationResponse(response);
 }
