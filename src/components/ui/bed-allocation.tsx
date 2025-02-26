@@ -25,7 +25,6 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [setSelectedTreatment] = useState<Treatment | null>(null);
   const [showTreatmentSelect, setShowTreatmentSelect] = useState(false);
 
   const filteredPatients = availablePatients.filter(patient => 
@@ -51,7 +50,6 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       setShowModal(false);
       setSearchTerm("");
       setSelectedPatient(null);
-      setSelectedTreatment(null);
       setShowTreatmentSelect(false);
       setCurrentPage(1);
     }
@@ -60,7 +58,6 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const handleClose = () => {
     setShowModal(false);
     setSelectedPatient(null);
-    setSelectedTreatment(null);
     setShowTreatmentSelect(false);
     setSearchTerm("");
     setCurrentPage(1);
@@ -149,7 +146,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   return (
     <Card className="p-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5>Add patient</h5>
+        <h5>Patients to allocate</h5>
         <Button variant="primary" onClick={allocatePatients}>
           Allocate
         </Button>
