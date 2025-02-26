@@ -8,6 +8,7 @@ import CustomNavbar from './components/ui/navbar.tsx';
 import Home from './pages/home-page.tsx';
 import BedAllocation from './pages/bed-allocation.tsx';
 import DataInspector from './pages/inspect-data.tsx';
+import ApiDocumentation from './pages/api-documentation.tsx';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/bed-allocation" element={<BedAllocation />} />
           <Route path="/inspect" element={<DataInspector />} />
+          <Route path="/api" element={<ApiDocumentation />} />
         </Routes>
       </div>
     </div>
