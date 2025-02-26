@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Button, Form, InputGroup, ListGroup, Card, Modal } from "react-bootstrap";
-import { FaPlus, FaTrash, FaSearch } from "react-icons/fa";
+import { Button, ListGroup, Card } from "react-bootstrap";
+import { FaPlus, FaTrash } from "react-icons/fa";
 
 import { Patient, Treatment } from "../../types/types";
-import CustomPagination from "./custom-pagination.tsx";
+import SearchModal from "./search-modal.tsx";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -24,6 +24,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [treatmentCurrentPage, setTreatmentCurrentPage] = useState(1);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showTreatmentSelect, setShowTreatmentSelect] = useState(false);
 
@@ -38,6 +39,11 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
   const currentItems = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredPatients.length / ITEMS_PER_PAGE);
+  // Pagination elements for treatments
+  const indexOfLastTreatment = treatmentCurrentPage * ITEMS_PER_PAGE;
+  const indexOfFirstTreatment = indexOfLastTreatment - ITEMS_PER_PAGE;
+  const currentTreatments = treatments.slice(indexOfFirstTreatment, indexOfLastTreatment);
+  const treatmentTotalPages = Math.ceil(treatments.length / ITEMS_PER_PAGE);
 
   const handleSelectPatient = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -70,68 +76,25 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
     </Button>
   );
 
-  // Add this modal component
-  const searchModal = (
-    <Modal show={showModal} onHide={handleClose} size="lg">
-      <Modal.Header closeButton>
-        <Modal.Title>
-          {showTreatmentSelect ? 'Select Treatment' : 'Search Patients'}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {!showTreatmentSelect ? (
-          <>
-            <InputGroup className="mb-3">
-              <InputGroup.Text>
-                <FaSearch />
-              </InputGroup.Text>
-              <Form.Control
-                type="text"
-                placeholder="Search patients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </InputGroup>
-            <ListGroup>
-              {currentItems.map((patient) => (
-                <ListGroup.Item
-                  key={patient.patientId}
-                  className="d-flex justify-content-between align-items-center"
-                  action
-                >
-                  <span>{patient.patientId} - {patient.patientName} {patient.patientSurname}</span>
-                  <Button variant="primary" size="sm" onClick={() => handleSelectPatient(patient)}>
-                    Select
-                  </Button>
-                </ListGroup.Item>
-              ))}
-            </ListGroup>
-            <div className="d-flex justify-content-center mt-3">
-              <CustomPagination 
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
-          </>
-        ) : (
-          <ListGroup>
-            {treatments.map((treatment) => (
-              <ListGroup.Item
-                key={treatment.diagnosis + '_' + treatment.treatmentId}
-                className="d-flex justify-content-between align-items-center"
-                action
-              >
-                <span>{treatment.diagnosis}_{treatment.treatmentId}</span>
-                <Button variant="primary" size="sm" onClick={() => handleTreatmentSelect(treatment)}>
-                  Select
-                </Button>
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
-        )}
-      </Modal.Body>
-    </Modal>
+  const searchModalComponent = (
+    <SearchModal
+      show={showModal}
+      onHide={handleClose}
+      showTreatmentSelect={showTreatmentSelect}
+      searchTerm={searchTerm}
+      onSearchChange={setSearchTerm}
+      currentItems={currentItems}
+      treatments={treatments}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+      onSelectPatient={handleSelectPatient}
+      onSelectTreatment={handleTreatmentSelect}
+      treatmentCurrentPage={treatmentCurrentPage}
+      treatmentTotalPages={treatmentTotalPages}
+      onTreatmentPageChange={setTreatmentCurrentPage}
+      currentTreatments={currentTreatments}
+    />
   );
 
   const removePatient = (index) => {
@@ -153,7 +116,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       </div>
 
       {addPatientButton}
-      {searchModal}
+      {searchModalComponent}
 
       <ListGroup>
         {patients.map((patient, index) => (
