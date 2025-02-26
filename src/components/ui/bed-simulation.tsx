@@ -2,13 +2,16 @@ import React, { useState } from "react";
 import { Container, Row, Col, Button, Form } from "react-bootstrap";
 
 import { postSimulationScenario, postSimulationScenarioGlobal, postMultiSimulationScenario } from "../../services/apiService.ts";
-import { SimulationRequest, ScenarioRequest, MultiSimulationRequest } from "../../types/types";
+import { SimulationRequest, SimulationResponse, ScenarioRequest, MultiSimulationRequest } from "../../types/types";
+import PatientDistribution from "./patients-distribution.tsx";
 
 const SimulationPanel = () => {
   const [caseType, setCaseType] = useState("common");
   const [solveType, setSolveType] = useState("daily");
   const [risk, setRisk] = useState(0.5);
   const [fileContent, setFileContent] = useState<string | ArrayBuffer | null>(null);
+  const [results, setResults] = useState<SimulationResponse>({ allocations: [], changes: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -53,6 +56,8 @@ const SimulationPanel = () => {
 
               postSimulationScenario(simulationRequest)
                 .then(response => {
+                  setResults(response);
+                  setCurrentPage(1);
                   console.log("Simulation successful:", response);
                 })
                 .catch(error => {
@@ -68,6 +73,8 @@ const SimulationPanel = () => {
 
               postSimulationScenario(simulationRequest)
                 .then(response => {
+                  setResults(response);
+                  setCurrentPage(1);
                   console.log("Simulation successful:", response);
                 })
                 .catch(error => {
@@ -75,16 +82,18 @@ const SimulationPanel = () => {
                 });
               break;
             default:
-              const multiSimulationRquest: MultiSimulationRequest = {
+              const multiSimulationRequest: MultiSimulationRequest = {
                 scenario: scenarioRequests,
                 repetitions: 1,
                 risk: risk,
                 smtMode: "changes"
               };
 
-              postMultiSimulationScenario(multiSimulationRquest)
+              postMultiSimulationScenario(multiSimulationRequest)
                 .then(response => {
                   console.log("Simulation successful:", response);
+                  setResults(response);
+                  setCurrentPage(1);
                 })
                 .catch(error => {
                   console.error("Simulation failed:", error);
@@ -101,6 +110,8 @@ const SimulationPanel = () => {
 
           postSimulationScenarioGlobal(globalSimulationRequest)
             .then(response => {
+              setResults(response);
+              setCurrentPage(1);
               console.log("Simulation successful:", response);
             })
             .catch(error => {
@@ -112,82 +123,96 @@ const SimulationPanel = () => {
   };
 
   return (
-    <Container className="p-3 border rounded shadow-sm" style={{ maxWidth: "800px" }}>
-      {/* Case Selection */}
-      <Row className="mb-2">
-        <Col>
-          <Form.Check
-            type="radio"
-            label="Worst case"
-            name="caseType"
-            value="worst"
-            checked={caseType === "worst"}
-            onChange={() => setCaseType("worst")}
-          />
-        </Col>
-        <Col>
-          <Form.Check
-            type="radio"
-            label="Common case"
-            name="caseType"
-            value="common"
-            checked={caseType === "common"}
-            onChange={() => setCaseType("common")}
-          />
-        </Col>
-        <Col>
-          <Form.Check
-            type="radio"
-            label="Sampling"
-            name="caseType"
-            value="sampling"
-            checked={caseType === "sampling"}
-            onChange={() => setCaseType("sampling")}
-          />
-        </Col>
-      </Row>
+    <div>
+      <Container className="p-3 border rounded shadow-sm" style={{ maxWidth: "800px" }}>
+        {/* Case Selection */}
+        <Row className="mb-2">
+          <Col>
+            <Form.Check
+              type="radio"
+              label="Worst case"
+              name="caseType"
+              value="worst"
+              checked={caseType === "worst"}
+              onChange={() => setCaseType("worst")}
+            />
+          </Col>
+          <Col>
+            <Form.Check
+              type="radio"
+              label="Common case"
+              name="caseType"
+              value="common"
+              checked={caseType === "common"}
+              onChange={() => setCaseType("common")}
+            />
+          </Col>
+          <Col>
+            <Form.Check
+              type="radio"
+              label="Sampling"
+              name="caseType"
+              value="sampling"
+              checked={caseType === "sampling"}
+              onChange={() => setCaseType("sampling")}
+            />
+          </Col>
+        </Row>
 
-      {/* Solve Type Selection */}
-      <Row className="mb-3">
-        <Col>
-          <Form.Check
-            type="radio"
-            label="Daily solve"
-            name="solveType"
-            value="daily"
-            checked={solveType === "daily"}
-            onChange={() => setSolveType("daily")}
-          />
-        </Col>
-        <Col>
-          <Form.Check
-            type="radio"
-            label="Global solve"
-            name="solveType"
-            value="global"
-            checked={solveType === "global"}
-            onChange={() => setSolveType("global")}
-          />
-        </Col>
-      </Row>
+        {/* Solve Type Selection */}
+        <Row className="mb-3">
+          <Col>
+            <Form.Check
+              type="radio"
+              label="Daily solve"
+              name="solveType"
+              value="daily"
+              checked={solveType === "daily"}
+              onChange={() => setSolveType("daily")}
+            />
+          </Col>
+          <Col>
+            <Form.Check
+              type="radio"
+              label="Global solve"
+              name="solveType"
+              value="global"
+              checked={solveType === "global"}
+              onChange={() => setSolveType("global")}
+            />
+          </Col>
+        </Row>
 
-      {/* Risk Slider */}
-      <Row className="mb-3">
+        {/* Risk Slider */}
+        <Row className="mb-3">
         <Col>
-          <Form.Label>Risk</Form.Label>
-          <Form.Range value={risk} onChange={(e) => setRisk(Number(e.target.value))} />
+          <Form.Label>Risk ({risk})</Form.Label>
+          <Form.Range 
+            value={risk} 
+            onChange={(e) => setRisk(Number(e.target.value))} 
+            min={0}
+            max={1}
+            step={0.01}
+          />
+          <div className="d-flex justify-content-between">
+            <small>0</small>
+            <small>1</small>
+          </div>
         </Col>
-        <Col className="d-flex align-items-center">
-          <Form.Label style={{ padding: "1em" }}>Scenario</Form.Label>
-          <Form.Control type="file" onChange={handleFileChange} />
-        </Col>
-      </Row>
+          <Col className="d-flex align-items-center">
+            <Form.Label style={{ padding: "1em" }}>Scenario</Form.Label>
+            <Form.Control type="file" onChange={handleFileChange} />
+          </Col>
+        </Row>
 
-      {/* Simulate Button */}
-      <Button variant="primary" size="lg" className="w-100" style={{ maxWidth: "150px" }} onClick={handleSimulate}>
-        Simulate
-      </Button>
-    </Container>
+        {/* Simulate Button */}
+        <Button variant="primary" size="lg" className="w-100" style={{ maxWidth: "150px" }} onClick={handleSimulate}>
+          Simulate
+        </Button>
+      </Container>
+
+      <PatientDistribution results={results} currentPage={currentPage} setCurrentPage={setCurrentPage} />
+    </div>
   );
 };
 
