@@ -1,5 +1,6 @@
 import React, { useState, JSX } from "react";
 import { Table, Pagination } from "react-bootstrap";
+import CustomPagination from "./custom-pagination.tsx";
 
 interface Column {
   header: string;
@@ -25,55 +26,6 @@ const GenericTable = <T,>({ data, columns, itemsPerPage = 10 }: GenericTableProp
     setCurrentPage(pageNumber);
   };
 
-  const renderPaginationItems = () => {
-    const pageNumbers: JSX.Element[] = [];
-    const maxPagesToShow = 5;
-    const halfMaxPagesToShow = Math.floor(maxPagesToShow / 2);
-
-    let startPage = Math.max(1, currentPage - halfMaxPagesToShow);
-    let endPage = Math.min(totalPages, currentPage + halfMaxPagesToShow);
-
-    if (currentPage <= halfMaxPagesToShow) {
-      endPage = Math.min(totalPages, maxPagesToShow);
-    }
-
-    if (currentPage + halfMaxPagesToShow >= totalPages) {
-      startPage = Math.max(1, totalPages - maxPagesToShow + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(
-        <Pagination.Item
-          key={i}
-          active={i === currentPage}
-          onClick={() => handlePageChange(i)}
-        >
-          {i}
-        </Pagination.Item>
-      );
-    }
-
-    if (startPage > 1) {
-      pageNumbers.unshift(<Pagination.Ellipsis key="start-ellipsis" />);
-      pageNumbers.unshift(
-        <Pagination.Item key={1} onClick={() => handlePageChange(1)}>
-          1
-        </Pagination.Item>
-      );
-    }
-
-    if (endPage < totalPages) {
-      pageNumbers.push(<Pagination.Ellipsis key="end-ellipsis" />);
-      pageNumbers.push(
-        <Pagination.Item key={totalPages} onClick={() => handlePageChange(totalPages)}>
-          {totalPages}
-        </Pagination.Item>
-      );
-    }
-
-    return pageNumbers;
-  };
-
   return (
     <>
       <Table striped bordered hover responsive>
@@ -94,7 +46,11 @@ const GenericTable = <T,>({ data, columns, itemsPerPage = 10 }: GenericTableProp
           ))}
         </tbody>
       </Table>
-      <Pagination>{renderPaginationItems()}</Pagination>
+      <CustomPagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </>
   );
 };
