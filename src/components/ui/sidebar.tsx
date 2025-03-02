@@ -28,7 +28,7 @@ const CustomSidebar = () => {
         {[
           { id: "1", text: "Hospital Ward", icon: HospitalIcon, link: "#how-to-install" },
           { id: "2", text: "Staff adjustments", icon: DoctorIcon, link: "#usage" },
-          { id: "3", text: "Patients management", icon: UserIcon, link: "#overview" },
+          { id: "3", text: "Patients management", icon: UserIcon, link: "/patients" },
           { id: "4", text: "Staff allocation", icon: StaffIcon, link: "#api" },
           { id: "5", text: "Bed allocation", icon: BedIcon, link: "/bed-allocation" },
           { id: "6", text: "Browse data", icon: SearchIcon, link: "/inspect" },
