@@ -8,6 +8,15 @@ export type Patient = {
   gender: string;
 }
 
+export type PatientRequest = {
+  patientName: string;
+  patientSurname: string;
+  patientAddress: string;
+  city: string;
+  patientBirthdate: string | null; // LocalDateTime can be represented as a string in ISO format
+  gender: string;
+}
+
 export const patientColumns = [
   { header: "ID", accessor: "patientId" },
   { header: "Name", accessor: "patientName" },
