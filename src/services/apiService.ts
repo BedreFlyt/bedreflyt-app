@@ -1,5 +1,12 @@
 import axios from 'axios';
-import { SimulationRequest, MultiSimulationRequest, SimulationResponse, DayAllocation } from '../types/types.ts';
+import {
+  SimulationRequest,
+  MultiSimulationRequest,
+  SimulationResponse,
+  DayAllocation,
+  Patient,
+  PatientRequest
+} from '../types/types.ts';
 
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
 const completeUrl = process.env.COMPLETE_URL || 'http://localhost:8090';
@@ -29,6 +36,38 @@ const fetchData = async (url: string) => {
   }
 
   return data;
+};
+
+export const createPatient = async (patientRequest: PatientRequest): Promise<Patient> => {
+  const response = await fetch('/api/patient/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(patientRequest),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to create patient');
+  }
+  
+  return response.json();
+};
+
+export const updatePatient = async (id: string, patientRequest: PatientRequest): Promise<Patient> => {
+  const response = await fetch(`/api/patient/update`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(patientRequest),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to update patient');
+  }
+  
+  return response.json();
 };
 
 export const getPatientData = async () => {
