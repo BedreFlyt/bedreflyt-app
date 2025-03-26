@@ -4,6 +4,7 @@ import { FaPlus, FaPencilAlt, FaTrash } from 'react-icons/fa';
 
 import { createPatient, getPatientData, updatePatient } from '../services/apiService.ts';
 import { Patient, PatientRequest } from '../types/types.ts';
+import CustomPagination from '../components/ui/custom-pagination.tsx';
 
 const Patients = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -17,11 +18,23 @@ const Patients = () => {
     birthdate: '',
     gender: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const patientsPerPage = 15; // Number of patients per page
 
   // Mock data - replace with actual API calls
   useEffect(() => {
     getPatientData().then(data => setPatients(data));
   }, []);
+
+  const indexOfLastPatient = currentPage * patientsPerPage;
+  const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
+  const currentPatients = patients.slice(indexOfFirstPatient, indexOfLastPatient);
+
+  const totalPages = Math.ceil(patients.length / patientsPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
   const handleShowModal = (patient?: Patient) => {
     if (patient) {
@@ -101,7 +114,7 @@ const Patients = () => {
   return (
     <Container className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Users Management</h2>
+        <h2>Person Anagraphic Management</h2>
         <Button 
           variant="success" 
           onClick={() => handleShowModal()}
@@ -121,7 +134,7 @@ const Patients = () => {
           </tr>
         </thead>
         <tbody>
-          {patients.map(patient => (
+          {currentPatients.map(patient => (
             <tr key={patient.patientId}>
               <td>{patient.patientName}</td>
               <td>{patient.patientSurname}</td>
@@ -147,6 +160,12 @@ const Patients = () => {
           ))}
         </tbody>
       </Table>
+
+      <CustomPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
 
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
