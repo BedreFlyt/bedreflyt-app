@@ -84,7 +84,7 @@ const DataInspector = () => {
         id="uncontrolled-tab-example"
         className="mb-3"
       >
-        <Tab eventKey="patients" title="Patients Anagraphical Information">
+        <Tab eventKey="patients" title="Person Anagraphical Information">
           <GenericTable data={formatTableData(patientData, patientColumns)} columns={patientColumns} />
         </Tab>
         <Tab eventKey="rooms" title="Rooms">
