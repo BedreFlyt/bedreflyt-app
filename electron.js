@@ -7,8 +7,8 @@ async function createWindow () {
     const isDev = await import('electron-is-dev');
 
     mainWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
+        width: 1500,
+        height: 1024,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'), // Optional for secure context
             contextIsolation: true,
