@@ -39,7 +39,7 @@ const fetchData = async (url: string) => {
 };
 
 export const createPatient = async (patientRequest: PatientRequest): Promise<Patient> => {
-  const response = await fetch('/api/patient/create', {
+  const response = await fetch('/api/v1/patients/create', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ export const createPatient = async (patientRequest: PatientRequest): Promise<Pat
 };
 
 export const updatePatient = async (id: string, patientRequest: PatientRequest): Promise<Patient> => {
-  const response = await fetch(`/api/patient/update`, {
+  const response = await fetch(`/api/v1/patients/update`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -71,33 +71,58 @@ export const updatePatient = async (id: string, patientRequest: PatientRequest):
 };
 
 export const getPatientData = async () => {
-  const url = completeUrl + '/api/patient/retrieve';
+  const url = completeUrl + '/api/v1/patients';
   const response = await axios.get(url);
   return response.data;
 };
 
 export const getPatientAllocationData = () => {
-  const url = completeUrl + '/api/patient-allocation/retrieve';
+  const url = completeUrl + '/api/v1/patient-allocations';
   return fetchData(url);
 }
 
 export const getTreatmentData = () => {
-  const url = completeUrl + '/api/fuseki/treatment/retrieve';
+  const url = completeUrl + '/api/v1/fuseki/treatments';
   return fetchData(url);
 };
 
 export const getRoomData = () => {
-  const url = completeUrl + '/api/fuseki/room/retrieve';
+  const url = completeUrl + '/api/v1/fuseki/rooms';
   return fetchData(url);
 };
 
 export const getTaskData = () => {
-  const url = completeUrl + '/api/fuseki/task/retrieve';
+  const url = completeUrl + '/api/v1/fuseki/tasks';
   return fetchData(url);
 };
 
 export const getDiagnosisData = () => {
-  const url = completeUrl + '/api/fuseki/diagnosis/retrieve';
+  const url = completeUrl + '/api/v1/fuseki/diagnosis';
+  return fetchData(url);
+}
+
+export const getWardData = () => {
+  const url = completeUrl + '/api/v1/fuseki/wards';
+  return fetchData(url);
+};
+
+export const getMonitoringCategoryData = () => {
+  const url = completeUrl + '/api/v1/fuseki/monitoring-categories';
+  return fetchData(url);
+}
+
+export const getCityData = () => {
+  const url = completeUrl + '/api/v1/fuseki/cities';
+  return fetchData(url);
+}
+
+export const getFloorData = () => {
+  const url = completeUrl + '/api/v1/fuseki/floors';
+  return fetchData(url);
+}
+
+export const getHospitalData = () => {
+  const url = completeUrl + '/api/v1/fuseki/hospitals';
   return fetchData(url);
 }
 
@@ -127,19 +152,19 @@ const transformSimulationResponse = (response: any): SimulationResponse => {
 };
 
 export const postSimulationScenario = async (simulationRequest: SimulationRequest): Promise<SimulationResponse> => {
-  const url = completeUrl + '/api/simulation/simulate';
+  const url = completeUrl + '/api/v1/simulation/simulate';
   const response = await axios.post(url, simulationRequest);
   return transformSimulationResponse(response);
 }
 
 export const postSimulationScenarioGlobal = async (simulationRequest: SimulationRequest): Promise<SimulationResponse> => {
-  const url = completeUrl + '/api/simulation/simulate-global';
+  const url = completeUrl + '/api/v1/simulation/simulate-global';
   const response = await axios.post(url, simulationRequest);
   return transformSimulationResponse(response);
 }
 
 export const postMultiSimulationScenario = async (simulationRequest: MultiSimulationRequest): Promise<SimulationResponse> => {
-  const url = completeUrl + '/api/simulation/simulate-many';
+  const url = completeUrl + '/api/v1/simulation/simulate-many';
   const response = await axios.post(url, simulationRequest);
   return transformSimulationResponse(response);
 }
