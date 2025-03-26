@@ -18,7 +18,6 @@ export type PatientRequest = {
 }
 
 export const patientColumns = [
-  { header: "ID", accessor: "patientId" },
   { header: "Name", accessor: "patientName" },
   { header: "Surname", accessor: "patientSurname" },
   { header: "Address", accessor: "patientAddress" },
