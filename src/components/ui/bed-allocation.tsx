@@ -121,7 +121,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       <ListGroup>
         {patients.map((patient, index) => (
           <ListGroup.Item key={index} className="d-flex justify-content-between">
-            {patient.patientId} - {patient.patientName} {patient.patientSurname} - {patient.treatment.diagnosis}_{patient.treatment.treatmentId}
+            {patient.patientId} - {patient.patientName} {patient.patientSurname} - {patient.treatment.diagnosis.diagnosisName}_{patient.treatment.treatmentName}
             <Button variant="danger" size="sm" onClick={() => removePatient(index)}>
               <FaTrash />
             </Button>
