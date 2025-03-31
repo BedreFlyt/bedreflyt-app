@@ -14,8 +14,20 @@ const SimulationPanel = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [wardData, setWardData] = useState<Ward[] | undefined>(undefined);
 
-  const [selectedWard, setSelectedWard] = useState<string>("Neurosurgery");
-  const [selectedHospital, setSelectedHospital] = useState<string>("OSL-RH");
+  const [selectedWard, setSelectedWard] = useState<Ward>({
+    wardName: "",
+    wardCode: "",
+    wardHospital: {
+      hospitalCode: "",
+      hospitalName: "",
+      hospitalCity: {
+        cityName: "",
+      }
+    },
+    wardFloor: {
+      floorNumber: 0,
+    }
+  });
 
 
   useEffect(() => {
@@ -71,8 +83,8 @@ const SimulationPanel = () => {
                 scenario: scenarioRequests,
                 mode: caseType,
                 smtMode: "changes",
-                wardName: selectedWard,
-                hospitalCode: selectedHospital
+                wardName: selectedWard.wardName,
+                hospitalCode: selectedWard.wardHospital.hospitalCode
               };
 
               postSimulationScenario(simulationRequest)
@@ -90,8 +102,8 @@ const SimulationPanel = () => {
                 scenario: scenarioRequests,
                 mode: caseType,
                 smtMode: "changes",
-                wardName: selectedWard,
-                hospitalCode: selectedHospital
+                wardName: selectedWard.wardName,
+                hospitalCode: selectedWard.wardHospital.hospitalCode
               };
 
               postSimulationScenario(simulationRequest)
@@ -110,8 +122,8 @@ const SimulationPanel = () => {
                 repetitions: 1,
                 risk: risk,
                 smtMode: "changes",
-                wardName: selectedWard,
-                hospitalCode: selectedHospital
+                wardName: selectedWard.wardName,
+                hospitalCode: selectedWard.wardHospital.hospitalCode
               };
 
               postMultiSimulationScenario(multiSimulationRequest)
@@ -131,8 +143,8 @@ const SimulationPanel = () => {
             scenario: scenarioRequests,
             mode: caseType,
             smtMode: "changes",
-            wardName: selectedWard,
-            hospitalCode: selectedHospital
+            wardName: selectedWard.wardName,
+            hospitalCode: selectedWard.wardHospital.hospitalCode
           };
 
           postSimulationScenarioGlobal(globalSimulationRequest)
@@ -215,28 +227,18 @@ const SimulationPanel = () => {
             <Form.Group>
               <Form.Label>Ward</Form.Label>
               <Form.Select
-                value={selectedWard}
-                onChange={(e) => setSelectedWard(e.target.value)}
+                value={selectedWard.wardName}
+                onChange={(e) => {
+                  const selectedWardName = e.target.value;
+                  const ward = wardData?.find(w => w.wardName === selectedWardName);
+                  if (ward) {
+                    setSelectedWard(ward);
+                  }
+                }}
               >
                 {wardData && wardData.map((ward) => (
                   <option key={ward.wardName} value={ward.wardName}>
-                    {ward.wardName}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          </Col>
-
-          <Col>
-            <Form.Group>
-              <Form.Label>Hospital</Form.Label>
-              <Form.Select
-                value={selectedHospital}
-                onChange={(e) => setSelectedHospital(e.target.value)}
-              >
-                {wardData && wardData.map((ward) => (
-                  <option key={ward.wardHospital.hospitalCode} value={ward.wardHospital.hospitalCode}>
-                    {ward.wardHospital.hospitalCode}
+                    {ward.wardName} - {ward.wardHospital.hospitalCode}
                   </option>
                 ))}
               </Form.Select>
