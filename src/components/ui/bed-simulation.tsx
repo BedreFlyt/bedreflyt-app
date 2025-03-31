@@ -14,35 +14,27 @@ const SimulationPanel = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [wardData, setWardData] = useState<Ward[] | undefined>(undefined);
 
-  const [selectedWard, setSelectedWard] = useState<Ward>({
-    wardName: "",
-    wardCode: "",
-    wardHospital: {
-      hospitalCode: "",
-      hospitalName: "",
-      hospitalCity: {
-        cityName: "",
-      }
-    },
-    wardFloor: {
-      floorNumber: 0,
-    }
-  });
+  const [selectedWard, setSelectedWard] = useState<string>("");
 
 
   useEffect(() => {
-      const fetchData = async () => {
-        try {
-          const wardData: Ward[] = await getWardData();
+    const fetchData = async () => {
+      try {
+        const wardData: Ward[] = await getWardData();
+        setWardData(wardData);
   
-          setWardData(wardData);
-        } catch (error) {
-          console.error("Error fetching data:", error);
+        // Automatically select the first ward if only one exists
+        if (wardData.length === 1) {
+          const firstWard = wardData[0];
+          setSelectedWard(`${firstWard.wardName} - ${firstWard.wardHospital.hospitalCode}`);
         }
-      };
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
   
-      fetchData();
-    }, []);
+    fetchData();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,6 +67,10 @@ const SimulationPanel = () => {
 
       console.log ("Scenario Requests:", scenarioRequests);
       let simulationRequest: SimulationRequest;
+      const [selectedWardName, selectedHospitalCode] = selectedWard.split(" - ");
+      console.log("Selected Ward:", selectedWard);
+      console.log("Selected Ward Name:", selectedWardName);
+      console.log("Selected Hospital Code:", selectedHospitalCode);
       switch (solveType) {
         case "daily":
           switch (caseType) {
@@ -83,8 +79,8 @@ const SimulationPanel = () => {
                 scenario: scenarioRequests,
                 mode: caseType,
                 smtMode: "changes",
-                wardName: selectedWard.wardName,
-                hospitalCode: selectedWard.wardHospital.hospitalCode
+                wardName: selectedWardName,
+                hospitalCode: selectedHospitalCode
               };
 
               postSimulationScenario(simulationRequest)
@@ -102,8 +98,8 @@ const SimulationPanel = () => {
                 scenario: scenarioRequests,
                 mode: caseType,
                 smtMode: "changes",
-                wardName: selectedWard.wardName,
-                hospitalCode: selectedWard.wardHospital.hospitalCode
+                wardName: selectedWardName,
+                hospitalCode: selectedHospitalCode
               };
 
               postSimulationScenario(simulationRequest)
@@ -122,8 +118,8 @@ const SimulationPanel = () => {
                 repetitions: 1,
                 risk: risk,
                 smtMode: "changes",
-                wardName: selectedWard.wardName,
-                hospitalCode: selectedWard.wardHospital.hospitalCode
+                wardName: selectedWardName,
+                hospitalCode: selectedHospitalCode
               };
 
               postMultiSimulationScenario(multiSimulationRequest)
@@ -143,8 +139,8 @@ const SimulationPanel = () => {
             scenario: scenarioRequests,
             mode: caseType,
             smtMode: "changes",
-            wardName: selectedWard.wardName,
-            hospitalCode: selectedWard.wardHospital.hospitalCode
+            wardName: selectedWardName,
+            hospitalCode: selectedHospitalCode
           };
 
           postSimulationScenarioGlobal(globalSimulationRequest)
@@ -227,17 +223,13 @@ const SimulationPanel = () => {
             <Form.Group>
               <Form.Label>Ward</Form.Label>
               <Form.Select
-                value={selectedWard.wardName}
+                value={selectedWard}
                 onChange={(e) => {
-                  const selectedWardName = e.target.value;
-                  const ward = wardData?.find(w => w.wardName === selectedWardName);
-                  if (ward) {
-                    setSelectedWard(ward);
-                  }
-                }}
+                  console.log("Selected value:", e.target.value);
+                  setSelectedWard(e.target.value)}}
               >
                 {wardData && wardData.map((ward) => (
-                  <option key={ward.wardName} value={ward.wardName}>
+                  <option key={ward.wardName} value={`${ward.wardName} - ${ward.wardHospital.hospitalCode}`}>
                     {ward.wardName} - {ward.wardHospital.hospitalCode}
                   </option>
                 ))}
