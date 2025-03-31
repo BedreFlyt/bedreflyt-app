@@ -160,6 +160,12 @@ const transformSimulationResponse = (response: any): SimulationResponse => {
   };
 };
 
+export const postAllocation = async (simulationRequest: SimulationRequest): Promise<SimulationResponse> => {
+  const url = completeUrl + '/api/v1/allocation/allocate';
+  const response = await axios.post(url, simulationRequest);
+  return transformSimulationResponse(response);
+}
+
 export const postSimulationScenario = async (simulationRequest: SimulationRequest): Promise<SimulationResponse> => {
   const url = completeUrl + '/api/v1/simulation/simulate';
   const response = await axios.post(url, simulationRequest);
