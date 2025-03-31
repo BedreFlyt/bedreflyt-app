@@ -151,11 +151,11 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
         setResults(response);
         setCurrentPage(1);
         console.log("Simulation successful:", response);
+        alert("Patients allocated successfully!");
       })
       .catch(error => {
         console.error("Simulation failed:", error);
       });
-    alert("Patients allocated successfully!");
   };
 
   return (
@@ -175,7 +175,8 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
               value={selectedWard}
               onChange={(e) => {
                 console.log("Selected value:", e.target.value);
-                setSelectedWard(e.target.value)}}
+                setSelectedWard(e.target.value)}
+              }
             >
               {wardData && wardData.map((ward) => (
                 <option key={ward.wardName} value={`${ward.wardName} - ${ward.wardHospital.hospitalCode}`}>
