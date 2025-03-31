@@ -141,6 +141,8 @@ export type SimulationRequest = {
   scenario: ScenarioRequest[];
   mode: string;
   smtMode?: string;
+  wardName: string;
+  hospitalCode: string;
 }
 
 export type MultiSimulationRequest = {
@@ -148,6 +150,8 @@ export type MultiSimulationRequest = {
   repetitions: number;
   risk: number;
   smtMode: string;
+  wardName: string;
+  hospitalCode: string;
 }
 
 export type WardRoom = {
