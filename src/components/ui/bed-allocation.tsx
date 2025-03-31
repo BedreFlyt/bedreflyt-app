@@ -1,8 +1,10 @@
-import React, { useState } from "react";
-import { Button, ListGroup, Card } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Button, ListGroup, Card, Row, Col, Form } from "react-bootstrap";
+
 import { FaPlus, FaTrash } from "react-icons/fa";
 
-import { Patient, Treatment } from "../../types/types";
+import { Patient, Treatment, Ward, SimulationRequest, SimulationResponse } from "../../types/types";
+import { getWardData, postAllocation } from "../../services/apiService.ts";
 import SearchModal from "./search-modal.tsx";
 
 const ITEMS_PER_PAGE = 15;
@@ -27,6 +29,29 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const [treatmentCurrentPage, setTreatmentCurrentPage] = useState(1);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showTreatmentSelect, setShowTreatmentSelect] = useState(false);
+  const [results, setResults] = useState<SimulationResponse>({ allocations: [], changes: 0 });
+  const [wardData, setWardData] = useState<Ward[] | undefined>(undefined);
+
+  const [selectedWard, setSelectedWard] = useState<string>("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const wardData: Ward[] = await getWardData();
+        setWardData(wardData);
+  
+        // Automatically select the first ward if only one exists
+        if (wardData.length === 1) {
+          const firstWard = wardData[0];
+          setSelectedWard(`${firstWard.wardName} - ${firstWard.wardHospital.hospitalCode}`);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+  
+    fetchData();
+  }, []);
 
   const filteredPatients = availablePatients.filter(patient => 
     `${patient.patientName} ${patient.patientSurname}`
@@ -103,6 +128,33 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
 
   const allocatePatients = () => {
     console.log("Allocating patients:", patients);
+    const [selectedWardName, selectedHospitalCode] = selectedWard.split(" - ");
+  
+    // Transform patients into ScenarioRequest format
+    const scenarioRequests = patients.map((patient, _) => ({
+      batch: 1,
+      patientId: patient.patientId,
+      diagnosis: patient.treatment.diagnosis.diagnosisName,
+    }));
+  
+    // Create the SimulationRequest object
+    const request: SimulationRequest = {
+      scenario: scenarioRequests,
+      mode: "worst",
+      smtMode: "changes",
+      wardName: selectedWardName,
+      hospitalCode: selectedHospitalCode,
+    };
+  
+    postAllocation(request)
+      .then(response => {
+        setResults(response);
+        setCurrentPage(1);
+        console.log("Simulation successful:", response);
+      })
+      .catch(error => {
+        console.error("Simulation failed:", error);
+      });
     alert("Patients allocated successfully!");
   };
 
@@ -114,6 +166,26 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
           Allocate
         </Button>
       </div>
+
+      <Row className="mb-3">
+        <Col>
+          <Form.Group>
+            <Form.Label>Ward</Form.Label>
+            <Form.Select
+              value={selectedWard}
+              onChange={(e) => {
+                console.log("Selected value:", e.target.value);
+                setSelectedWard(e.target.value)}}
+            >
+              {wardData && wardData.map((ward) => (
+                <option key={ward.wardName} value={`${ward.wardName} - ${ward.wardHospital.hospitalCode}`}>
+                  {ward.wardName} - {ward.wardHospital.hospitalCode}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </Col>
+      </Row>
 
       {addPatientButton}
       {searchModalComponent}
