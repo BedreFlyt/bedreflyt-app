@@ -68,9 +68,6 @@ const SimulationPanel = () => {
       console.log ("Scenario Requests:", scenarioRequests);
       let simulationRequest: SimulationRequest;
       const [selectedWardName, selectedHospitalCode] = selectedWard.split(" - ");
-      console.log("Selected Ward:", selectedWard);
-      console.log("Selected Ward Name:", selectedWardName);
-      console.log("Selected Hospital Code:", selectedHospitalCode);
       switch (solveType) {
         case "daily":
           switch (caseType) {
