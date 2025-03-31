@@ -51,7 +51,9 @@ const SimulationPanel = () => {
               simulationRequest = {
                 scenario: scenarioRequests,
                 mode: caseType,
-                smtMode: "changes"
+                smtMode: "changes",
+                wardName: "Neurosurgery",
+                hospitalCode: "OSL-RH"
               };
 
               postSimulationScenario(simulationRequest)
@@ -68,7 +70,9 @@ const SimulationPanel = () => {
               simulationRequest = {
                 scenario: scenarioRequests,
                 mode: caseType,
-                smtMode: "changes"
+                smtMode: "changes",
+                wardName: "Neurosurgery",
+                hospitalCode: "OSL-RH"
               };
 
               postSimulationScenario(simulationRequest)
@@ -86,7 +90,9 @@ const SimulationPanel = () => {
                 scenario: scenarioRequests,
                 repetitions: 1,
                 risk: risk,
-                smtMode: "changes"
+                smtMode: "changes",
+                wardName: "Neurosurgery",
+                hospitalCode: "OSL-RH"
               };
 
               postMultiSimulationScenario(multiSimulationRequest)
@@ -105,7 +111,9 @@ const SimulationPanel = () => {
           const globalSimulationRequest: SimulationRequest = {
             scenario: scenarioRequests,
             mode: caseType,
-            smtMode: "changes"
+            smtMode: "changes",
+            wardName: "Neurosurgery",
+            hospitalCode: "OSL-RH"
           };
 
           postSimulationScenarioGlobal(globalSimulationRequest)
