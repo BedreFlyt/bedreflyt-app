@@ -129,17 +129,26 @@ export const getHospitalData = () => {
 const transformSimulationResponse = (response: any): SimulationResponse => {
   const allocations = response.data.allocations.slice(1).map((dayAllocation: any[]) => {
     const transformedDay: DayAllocation = {};
-    
+
     // Process all rooms in the day allocation
     dayAllocation.forEach((roomContainer: any, index: number) => {
-      // Get the first (and only) key-value pair from the room container
-      const roomKey = Object.keys(roomContainer)[0];
-      const roomObj = roomContainer[roomKey];
-      
-      transformedDay[index] = {
-        gender: roomObj.gender || "Unknown",
-        patients: roomObj.patients || []
-      };
+      // Ensure roomContainer is valid and has at least one key
+      if (roomContainer && Object.keys(roomContainer).length > 0) {
+        const roomKey = Object.keys(roomContainer)[0];
+        const roomObj = roomContainer[roomKey];
+
+        // Ensure roomObj is not null or undefined
+        if (roomObj) {
+          transformedDay[roomKey] = {
+            gender: roomObj.patients && roomObj.patients.length > 0 ? roomObj.gender || "Unknown" : "",
+            patients: roomObj.patients || []
+          };
+        } else {
+          console.warn(`Room object is null for roomKey: ${roomKey}`);
+        }
+      } else {
+        console.warn(`Invalid roomContainer at index ${index}:`, roomContainer);
+      }
     });
 
     return transformedDay;
