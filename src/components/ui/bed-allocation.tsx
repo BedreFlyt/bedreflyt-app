@@ -6,6 +6,7 @@ import { FaPlus, FaTrash } from "react-icons/fa";
 import { Patient, Treatment, Ward, SimulationRequest, SimulationResponse } from "../../types/types";
 import { getWardData, postAllocation } from "../../services/apiService.ts";
 import SearchModal from "./search-modal.tsx";
+import PatientDistribution from "./patients-distribution.tsx";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -159,49 +160,57 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   };
 
   return (
-    <Card className="p-3">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5>Patients to allocate</h5>
-        <Button variant="primary" onClick={allocatePatients}>
-          Allocate
-        </Button>
-      </div>
+    <div>
+      <Card className="p-3">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h5>Patients to allocate</h5>
+          <Button variant="primary" onClick={allocatePatients}>
+            Allocate
+          </Button>
+        </div>
 
-      <Row className="mb-3">
-        <Col>
-          <Form.Group>
-            <Form.Label>Ward</Form.Label>
-            <Form.Select
-              value={selectedWard}
-              onChange={(e) => {
-                console.log("Selected value:", e.target.value);
-                setSelectedWard(e.target.value)}
-              }
-            >
-              {wardData && wardData.map((ward) => (
-                <option key={ward.wardName} value={`${ward.wardName} - ${ward.wardHospital.hospitalCode}`}>
-                  {ward.wardName} - {ward.wardHospital.hospitalCode}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        </Col>
-      </Row>
+        <Row className="mb-3">
+          <Col>
+            <Form.Group>
+              <Form.Label>Ward</Form.Label>
+              <Form.Select
+                value={selectedWard}
+                onChange={(e) => {
+                  console.log("Selected value:", e.target.value);
+                  setSelectedWard(e.target.value)}
+                }
+              >
+                {wardData && wardData.map((ward) => (
+                  <option key={ward.wardName} value={`${ward.wardName} - ${ward.wardHospital.hospitalCode}`}>
+                    {ward.wardName} - {ward.wardHospital.hospitalCode}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+        </Row>
 
-      {addPatientButton}
-      {searchModalComponent}
+        {addPatientButton}
+        {searchModalComponent}
 
-      <ListGroup>
-        {patients.map((patient, index) => (
-          <ListGroup.Item key={index} className="d-flex justify-content-between">
-            {patient.patientId} - {patient.patientName} {patient.patientSurname} - {patient.treatment.diagnosis.diagnosisName}_{patient.treatment.treatmentName}
-            <Button variant="danger" size="sm" onClick={() => removePatient(index)}>
-              <FaTrash />
-            </Button>
-          </ListGroup.Item>
-        ))}
-      </ListGroup>
-    </Card>
+        <ListGroup>
+          {patients.map((patient, index) => (
+            <ListGroup.Item key={index} className="d-flex justify-content-between">
+              {patient.patientId} - {patient.patientName} {patient.patientSurname} - {patient.treatment.diagnosis.diagnosisName}_{patient.treatment.treatmentName}
+              <Button variant="danger" size="sm" onClick={() => removePatient(index)}>
+                <FaTrash />
+              </Button>
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      </Card>
+
+      <PatientDistribution 
+        results={results}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage} 
+      />
+    </div>
   );
 };
 
