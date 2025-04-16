@@ -5,7 +5,8 @@ import {
   SimulationResponse,
   DayAllocation,
   Patient,
-  PatientRequest
+  PatientRequest,
+  Room
 } from '../types/types.ts';
 
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
@@ -126,7 +127,10 @@ export const getHospitalData = () => {
   return fetchData(url);
 }
 
-const transformSimulationResponse = (response: any): SimulationResponse => {
+const transformSimulationResponse = async (response: any): Promise<SimulationResponse> => {
+  // Fetch all rooms once
+  const allRooms: Room[] = await getRoomData();
+
   const allocations = response.data.allocations.slice(1).map((dayAllocation: any[]) => {
     const transformedDay: DayAllocation = {};
 
@@ -139,10 +143,39 @@ const transformSimulationResponse = (response: any): SimulationResponse => {
 
         // Ensure roomObj is not null or undefined
         if (roomObj) {
-          transformedDay[roomKey] = {
-            gender: roomObj.patients && roomObj.patients.length > 0 ? roomObj.gender || "Unknown" : "",
-            patients: roomObj.patients || []
-          };
+          try {
+            // Extract room details from the roomKey string
+            const match = roomKey.match(/WardRoom\(roomNumber\s*=\s*(\d+),\s*wardName\s*=\s*([^,]+),\s*hospitalCode\s*=\s*([^)]+)\)/);
+            console.log(`Processing roomKey: ${roomKey}`);
+            console.debug(`Processing roomKey: ${roomKey}`);
+            if (match) {
+              const roomNumber = parseInt(match[1], 10);
+              const wardName = match[2].trim();
+              const hospitalCode = match[3].trim();
+
+              // Find the Room object corresponding to the extracted details
+              const roomData = allRooms.find(
+                (room) =>
+                  room.roomNumber === roomNumber &&
+                  room.treatmentWard.wardName === wardName &&
+                  room.hospital.hospitalCode === hospitalCode
+              );
+
+              if (roomData) {
+                transformedDay[roomData.roomNumber] = {
+                  gender: roomObj.patients && roomObj.patients.length > 0 ? roomObj.gender || "Unknown" : "",
+                  patients: roomObj.patients || [],
+                  roomDetails: roomData
+                };
+              } else {
+                console.warn(`Room not found for details: roomNumber=${roomNumber}, wardName=${wardName}, hospitalCode=${hospitalCode}`);
+              }
+            } else {
+              console.error(`Invalid roomKey format: ${roomKey}`);
+            }
+          } catch (error) {
+            console.error(`Failed to process roomKey: ${roomKey}`, error);
+          }
         } else {
           console.warn(`Room object is null for roomKey: ${roomKey}`);
         }

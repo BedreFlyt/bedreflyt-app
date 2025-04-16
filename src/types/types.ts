@@ -157,6 +157,7 @@ export type MultiSimulationRequest = {
 export type WardRoom = {
   patients: Patient[];
   gender: string;
+  roomDetails: Room;
 }
 
 export type DayAllocation = {
