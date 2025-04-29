@@ -8,6 +8,33 @@ export type Patient = {
   gender: string;
 }
 
+export type PatientAllocation = {
+  id: number;
+  patientId: Patient;
+  acute: boolean;
+  diagnosisCode: string;
+  diagnosisName: string;
+  acuteCategory: number;
+  careCategory: number;
+  monitoringCategory: number;
+  careId: number;
+  contagious: boolean;
+  wardName: string;
+  hospitalCode: string;
+  roomNumber: number;
+  dueDate: string | null; // LocalDateTime can be represented as a string in ISO format
+  simulated: boolean;
+}
+
+export const patientAllocationColumns = [
+  { header: "Patient", accessor: "patientId" },
+  { header: "Diagnosis Code", accessor: "diagnosisCode" },
+  { header: "Ward Name", accessor: "wardName" },
+  { header: "Hospital Code", accessor: "hospitalCode" },
+  { header: "Room Number", accessor: "roomNumber" },
+  { header: "Due Date", accessor: "dueDate" }
+]
+
 export type PatientRequest = {
   patientName: string;
   patientSurname: string;

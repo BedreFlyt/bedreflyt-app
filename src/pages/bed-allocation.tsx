@@ -3,6 +3,7 @@ import { Container, Tabs, Tab } from "react-bootstrap";
 
 import SimulationPanel from "../components/ui/bed-simulation.tsx";
 import AllocationPanel from "../components/ui/bed-allocation.tsx";
+import Allocations from "../components/ui/allocations.tsx";
 
 import { getPatientData, getTreatmentData } from "../services/apiService.ts";
 
@@ -41,8 +42,8 @@ const BedAllocation = () => {
         <Tab eventKey="profile" title="Simulation">
           <SimulationPanel />
         </Tab>
-        <Tab eventKey="contact" title="Something" disabled>
-          Tab content for Something
+        <Tab eventKey="contact" title="Current Allocation">
+          <Allocations />
         </Tab>
       </Tabs>
     </Container>
