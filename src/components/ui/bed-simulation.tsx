@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Button, Form } from "react-bootstrap";
 
-import { postSimulationScenario, postSimulationScenarioGlobal, postMultiSimulationScenario } from "../../services/apiService.ts";
-import { SimulationRequest, SimulationResponse, ScenarioRequest, MultiSimulationRequest } from "../../types/types";
+import { postSimulationScenario, postSimulationScenarioGlobal, postMultiSimulationScenario, getWardData } from "../../services/apiService.ts";
+import { SimulationRequest, SimulationResponse, ScenarioRequest, MultiSimulationRequest, Ward } from "../../types/types";
 import PatientDistribution from "./patients-distribution.tsx";
 
 const SimulationPanel = () => {
@@ -12,6 +12,29 @@ const SimulationPanel = () => {
   const [fileContent, setFileContent] = useState<string | ArrayBuffer | null>(null);
   const [results, setResults] = useState<SimulationResponse>({ allocations: [], changes: 0 });
   const [currentPage, setCurrentPage] = useState(1);
+  const [wardData, setWardData] = useState<Ward[] | undefined>(undefined);
+
+  const [selectedWard, setSelectedWard] = useState<string>("");
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const wardData: Ward[] = await getWardData();
+        setWardData(wardData);
+  
+        // Automatically select the first ward if only one exists
+        if (wardData.length === 1) {
+          const firstWard = wardData[0];
+          setSelectedWard(`${firstWard.wardName} - ${firstWard.wardHospital.hospitalCode}`);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+  
+    fetchData();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,6 +67,7 @@ const SimulationPanel = () => {
 
       console.log ("Scenario Requests:", scenarioRequests);
       let simulationRequest: SimulationRequest;
+      const [selectedWardName, selectedHospitalCode] = selectedWard.split(" - ");
       switch (solveType) {
         case "daily":
           switch (caseType) {
@@ -51,7 +75,9 @@ const SimulationPanel = () => {
               simulationRequest = {
                 scenario: scenarioRequests,
                 mode: caseType,
-                smtMode: "changes"
+                smtMode: "changes",
+                wardName: selectedWardName,
+                hospitalCode: selectedHospitalCode
               };
 
               postSimulationScenario(simulationRequest)
@@ -68,7 +94,9 @@ const SimulationPanel = () => {
               simulationRequest = {
                 scenario: scenarioRequests,
                 mode: caseType,
-                smtMode: "changes"
+                smtMode: "changes",
+                wardName: selectedWardName,
+                hospitalCode: selectedHospitalCode
               };
 
               postSimulationScenario(simulationRequest)
@@ -86,7 +114,9 @@ const SimulationPanel = () => {
                 scenario: scenarioRequests,
                 repetitions: 1,
                 risk: risk,
-                smtMode: "changes"
+                smtMode: "changes",
+                wardName: selectedWardName,
+                hospitalCode: selectedHospitalCode
               };
 
               postMultiSimulationScenario(multiSimulationRequest)
@@ -105,7 +135,9 @@ const SimulationPanel = () => {
           const globalSimulationRequest: SimulationRequest = {
             scenario: scenarioRequests,
             mode: caseType,
-            smtMode: "changes"
+            smtMode: "changes",
+            wardName: selectedWardName,
+            hospitalCode: selectedHospitalCode
           };
 
           postSimulationScenarioGlobal(globalSimulationRequest)
@@ -180,6 +212,26 @@ const SimulationPanel = () => {
               checked={solveType === "global"}
               onChange={() => setSolveType("global")}
             />
+          </Col>
+        </Row>
+
+        <Row className="mb-3">
+          <Col>
+            <Form.Group>
+              <Form.Label>Ward</Form.Label>
+              <Form.Select
+                value={selectedWard}
+                onChange={(e) => {
+                  console.log("Selected value:", e.target.value);
+                  setSelectedWard(e.target.value)}}
+              >
+                {wardData && wardData.map((ward) => (
+                  <option key={ward.wardName} value={`${ward.wardName} - ${ward.wardHospital.hospitalCode}`}>
+                    {ward.wardName} - {ward.wardHospital.hospitalCode}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
           </Col>
         </Row>
 

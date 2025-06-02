@@ -89,11 +89,11 @@ const SearchModal: React.FC<SearchModalProps> = ({
             <ListGroup>
               {currentTreatments.map((treatment) => (
                 <ListGroup.Item
-                  key={treatment.diagnosis + '_' + treatment.treatmentId}
+                  key={treatment.treatmentName}
                   className="d-flex justify-content-between align-items-center"
                   action
                 >
-                  <span>{treatment.diagnosis}_{treatment.treatmentId}</span>
+                  <span>{treatment.treatmentName}</span>
                   <Button variant="primary" size="sm" onClick={() => onSelectTreatment(treatment)}>
                     Select
                   </Button>
