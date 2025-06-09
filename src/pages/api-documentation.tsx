@@ -2,7 +2,7 @@ import React from "react";
 import { Container } from "react-bootstrap";
 
 const ApiDocumentation = () => {
-  const baseUrl = process.env.BASE_URL || 'localhost';
+  const baseUrl = process.env.REACT_APP_BASE_URL || 'localhost';
 
   return (
     <Container className="p-3 border rounded shadow-sm">

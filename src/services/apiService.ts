@@ -10,7 +10,7 @@ import {
 } from '../types/types.ts';
 
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
-const completeUrl = process.env.COMPLETE_URL || 'http://localhost:8090';
+const completeUrl = process.env.REACT_APP_COMPLETE_URL || 'http://localhost:8090';
 
 const fetchData = async (url: string) => {
   const cachedData = localStorage.getItem(url);
