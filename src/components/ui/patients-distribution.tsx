@@ -127,7 +127,8 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
       };
       
       console.log("Sending updated allocation:", updatedResponse);
-      await updateAllocationFromResults(updatedResponse);
+      // Backend expects the DTO format with RoomAllocationItem[], not DayAllocation
+      await updateAllocationFromResults(updatedResponse as any);
       setSaveMessage({ type: 'success', text: 'Allocation saved successfully!' });
       setIsEditing(false);
     } catch (error: any) {
@@ -141,9 +142,11 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
   };
 
   const getAllPatients = (): Patient[] => {
-    if (!editedAllocation) return [];
+    // Get all unique patients from the ORIGINAL allocation (not edited)
+    // This ensures we have access to all patients even if they're removed from rooms
+    if (!currentDayAllocation) return [];
     const patients: Patient[] = [];
-    Object.values(editedAllocation).forEach(room => {
+    Object.values(currentDayAllocation).forEach(room => {
       room.patients.forEach(patient => {
         if (!patients.find(p => p.patientId === patient.patientId)) {
           patients.push(patient);
