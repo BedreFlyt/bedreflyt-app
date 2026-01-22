@@ -32,6 +32,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const [showTreatmentSelect, setShowTreatmentSelect] = useState(false);
   const [results, setResults] = useState<SimulationResponse>({ allocations: [], changes: 0 });
   const [wardData, setWardData] = useState<Ward[] | undefined>(undefined);
+  const [isAllocating, setIsAllocating] = useState(false);
 
   const [selectedWard, setSelectedWard] = useState<string>("");
 
@@ -123,7 +124,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
     />
   );
 
-  const removePatient = (index) => {
+  const removePatient = (index: number) => {
     setPatients(patients.filter((_, i) => i !== index));
   };
 
@@ -147,6 +148,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       hospitalCode: selectedHospitalCode,
     };
   
+    setIsAllocating(true);
     postAllocation(request)
       .then(response => {
         setResults(response);
@@ -156,6 +158,10 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       })
       .catch(error => {
         console.error("Simulation failed:", error);
+        alert("Allocation failed. Please try again.");
+      })
+      .finally(() => {
+        setIsAllocating(false);
       });
   };
 
@@ -164,8 +170,19 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       <Card className="p-3">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5>Patients to allocate</h5>
-          <Button variant="primary" onClick={allocatePatients}>
-            Allocate
+          <Button 
+            variant="primary" 
+            onClick={allocatePatients}
+            disabled={isAllocating || patients.length === 0}
+          >
+            {isAllocating ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Allocating...
+              </>
+            ) : (
+              'Allocate'
+            )}
           </Button>
         </div>
 

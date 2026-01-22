@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Container, Table, Button, Form, Alert } from "react-bootstrap";
+import { FaTrash, FaPlus } from "react-icons/fa";
 import { SimulationResponse, DayAllocation, Patient } from "../../types/types";
 import { updateAllocationFromResults } from "../../services/apiService.ts";
 
@@ -57,6 +58,44 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
         setEditedAllocation(updatedAllocation);
       }
     }
+  };
+
+  const handleRemovePatient = (roomId: string, patientIndex: number) => {
+    if (!editedAllocation) return;
+    
+    const updatedAllocation = { ...editedAllocation };
+    const room = updatedAllocation[roomId];
+    
+    if (room) {
+      room.patients.splice(patientIndex, 1);
+      setEditedAllocation(updatedAllocation);
+    }
+  };
+
+  const handleAddPatient = (roomId: string, patientId: string) => {
+    if (!editedAllocation) return;
+    
+    const updatedAllocation = { ...editedAllocation };
+    const room = updatedAllocation[roomId];
+    
+    // Find the patient from all rooms
+    let foundPatient: Patient | null = null;
+    Object.values(editedAllocation).forEach(r => {
+      const patient = r.patients.find(p => p.patientId === patientId);
+      if (patient) foundPatient = patient;
+    });
+    
+    if (room && foundPatient) {
+      room.patients.push(foundPatient);
+      setEditedAllocation(updatedAllocation);
+    }
+  };
+
+  const getAvailablePatientsForRoom = (roomId: string): Patient[] => {
+    if (!editedAllocation) return [];
+    const room = editedAllocation[roomId];
+    const roomPatientIds = new Set(room?.patients.map(p => p.patientId) || []);
+    return allPatients.filter(p => !roomPatientIds.has(p.patientId));
   };
 
   const handleSave = async () => {
@@ -154,24 +193,58 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
                       <td>{room.gender}</td>
                       <td>
                         {room.patients.map((patient, patientIndex) => (
-                          <div key={patientIndex} className="mb-2">
+                          <div key={patientIndex} className="mb-2 d-flex align-items-center gap-2">
                             {isEditing ? (
-                              <Form.Select
-                                value={patient.patientId}
-                                onChange={(e) => handlePatientChange(roomId, patientIndex, e.target.value)}
-                                size="sm"
-                              >
-                                {allPatients.map((p) => (
-                                  <option key={p.patientId} value={p.patientId}>
-                                    {p.patientName} {p.patientSurname} ({p.patientId})
+                              <>
+                                <Form.Select
+                                  value={patient.patientId}
+                                  onChange={(e) => handlePatientChange(roomId, patientIndex, e.target.value)}
+                                  size="sm"
+                                  className="flex-grow-1"
+                                >
+                                  <option value={patient.patientId}>
+                                    {patient.patientName} {patient.patientSurname} ({patient.patientId})
                                   </option>
-                                ))}
-                              </Form.Select>
+                                  {getAvailablePatientsForRoom(roomId).map((p) => (
+                                    <option key={p.patientId} value={p.patientId}>
+                                      {p.patientName} {p.patientSurname} ({p.patientId})
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                                <Button 
+                                  variant="danger" 
+                                  size="sm"
+                                  onClick={() => handleRemovePatient(roomId, patientIndex)}
+                                >
+                                  <FaTrash />
+                                </Button>
+                              </>
                             ) : (
                               <span>{patient.patientName} {patient.patientSurname}</span>
                             )}
                           </div>
                         ))}
+                        {isEditing && getAvailablePatientsForRoom(roomId).length > 0 && (
+                          <div className="mt-2">
+                            <Form.Select
+                              size="sm"
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  handleAddPatient(roomId, e.target.value);
+                                  e.target.value = '';
+                                }
+                              }}
+                              defaultValue=""
+                            >
+                              <option value="">+ Add patient to room</option>
+                              {getAvailablePatientsForRoom(roomId).map((p) => (
+                                <option key={p.patientId} value={p.patientId}>
+                                  {p.patientName} {p.patientSurname} ({p.patientId})
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
