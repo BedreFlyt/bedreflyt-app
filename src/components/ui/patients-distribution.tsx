@@ -91,10 +91,15 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
     }
   };
 
-  const getAvailablePatientsForRoom = (roomId: string): Patient[] => {
+  const getAvailablePatientsForRoom = (roomId: string, currentPatientId?: string): Patient[] => {
     if (!editedAllocation) return [];
     const room = editedAllocation[roomId];
-    const roomPatientIds = new Set(room?.patients.map(p => p.patientId) || []);
+    // Get all patient IDs in this room, excluding the current patient being edited
+    const roomPatientIds = new Set(
+      room?.patients
+        .map(p => p.patientId)
+        .filter(id => id !== currentPatientId) || []
+    );
     return allPatients.filter(p => !roomPatientIds.has(p.patientId));
   };
 
@@ -105,17 +110,31 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
     setSaveMessage(null);
     
     try {
-      const updatedResponse: SimulationResponse = {
-        ...results,
-        allocations: [editedAllocation]
+      // Transform the edited allocation back to the format expected by the backend
+      const transformedAllocation = Object.entries(editedAllocation).map(([roomId, roomData]) => {
+        return {
+          roomNumber: roomData.roomDetails.roomNumber,
+          wardName: roomData.roomDetails.treatmentWard.wardName,
+          hospitalCode: roomData.roomDetails.hospital.hospitalCode,
+          patients: roomData.patients,
+          gender: roomData.gender
+        };
+      });
+
+      const updatedResponse = {
+        allocations: [[transformedAllocation]],
+        changes: results.changes
       };
       
+      console.log("Sending updated allocation:", updatedResponse);
       await updateAllocationFromResults(updatedResponse);
       setSaveMessage({ type: 'success', text: 'Allocation saved successfully!' });
       setIsEditing(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save allocation:', error);
-      setSaveMessage({ type: 'error', text: 'Failed to save allocation. Please try again.' });
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to save allocation. Please try again.';
+      setSaveMessage({ type: 'error', text: errorMessage });
     } finally {
       setIsSaving(false);
     }
@@ -202,10 +221,7 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
                                   size="sm"
                                   className="flex-grow-1"
                                 >
-                                  <option value={patient.patientId}>
-                                    {patient.patientName} {patient.patientSurname} ({patient.patientId})
-                                  </option>
-                                  {getAvailablePatientsForRoom(roomId).map((p) => (
+                                  {getAvailablePatientsForRoom(roomId, patient.patientId).map((p) => (
                                     <option key={p.patientId} value={p.patientId}>
                                       {p.patientName} {p.patientSurname} ({p.patientId})
                                     </option>
