@@ -230,6 +230,6 @@ export const postMultiSimulationScenario = async (simulationRequest: MultiSimula
 }
 
 export const updateAllocationFromResults = async (simulationResponse: SimulationResponse): Promise<void> => {
-  const url = completeUrl + '/api/v1/update-from-allocation';
+  const url = completeUrl + '/api/v1/patient-allocations/update-from-allocation';
   await axios.put(url, simulationResponse);
 }
