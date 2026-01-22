@@ -1,6 +1,7 @@
-import React from "react";
-import { Container, Table, Pagination } from "react-bootstrap";
-import { SimulationResponse } from "../../types/types";
+import React, { useState, useEffect } from "react";
+import { Container, Table, Button, Form, Alert } from "react-bootstrap";
+import { SimulationResponse, DayAllocation, Patient } from "../../types/types";
+import { updateAllocationFromResults } from "../../services/apiService.ts";
 
 interface SimulationResultsProps {
   results: SimulationResponse;
@@ -8,85 +9,132 @@ interface SimulationResultsProps {
   setCurrentPage: (page: number) => void;
 }
 
-const getPaginationNumbers = (
-  currentPage: number,
-  totalPages: number,
-  maxVisiblePages: number = 5
-): (number | string)[] => {
-  const pages: (number | string)[] = [];
-  const halfVisible = Math.floor(maxVisiblePages / 2);
-
-  if (totalPages <= maxVisiblePages) {
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
-    }
-  } else {
-    if (currentPage > halfVisible + 1) {
-      pages.push(1, "...");
-    }
-
-    const start = Math.max(1, currentPage - halfVisible);
-    const end = Math.min(totalPages, currentPage + halfVisible);
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    if (currentPage < totalPages - halfVisible) {
-      pages.push("...", totalPages);
-    }
-  }
-
-  return pages;
-};
-
 const PatientDistribution: React.FC<SimulationResultsProps> = ({
   results,
   currentPage,
   setCurrentPage,
 }) => {
-  const currentDayAllocation = results?.allocations?.[currentPage - 1];
-  const totalDays = results?.allocations?.length || 0;
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedAllocation, setEditedAllocation] = useState<DayAllocation | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  
+  // Only display the first allocation
+  const currentDayAllocation = results?.allocations?.[0];
+  const totalDays = 1; // Always show only first allocation
 
-  const renderPagination = () => {
-    const paginationNumbers = getPaginationNumbers(currentPage, totalDays);
+  useEffect(() => {
+    if (currentDayAllocation && !isEditing) {
+      setEditedAllocation(JSON.parse(JSON.stringify(currentDayAllocation)));
+    }
+  }, [currentDayAllocation, isEditing]);
 
-    return (
-      <Pagination>
-        <Pagination.First onClick={() => setCurrentPage(1)} disabled={currentPage === 1} />
-        <Pagination.Prev
-          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-        />
-        {paginationNumbers.map((page, index) =>
-          typeof page === "number" ? (
-            <Pagination.Item
-              key={index}
-              active={currentPage === page}
-              onClick={() => setCurrentPage(page)}
-            >
-              {page}
-            </Pagination.Item>
-          ) : (
-            <Pagination.Ellipsis key={index} disabled />
-          )
-        )}
-        <Pagination.Next
-          onClick={() => setCurrentPage(Math.min(totalDays, currentPage + 1))}
-          disabled={currentPage === totalDays}
-        />
-        <Pagination.Last onClick={() => setCurrentPage(totalDays)} disabled={currentPage === totalDays} />
-      </Pagination>
-    );
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Cancel editing - reset to original
+      setEditedAllocation(JSON.parse(JSON.stringify(currentDayAllocation)));
+    }
+    setIsEditing(!isEditing);
+    setSaveMessage(null);
   };
+
+  const handlePatientChange = (roomId: string, patientIndex: number, newPatientId: string) => {
+    if (!editedAllocation) return;
+    
+    const updatedAllocation = { ...editedAllocation };
+    const room = updatedAllocation[roomId];
+    
+    if (room && room.patients[patientIndex]) {
+      // Find the patient from all rooms
+      let foundPatient: Patient | null = null;
+      Object.values(editedAllocation).forEach(r => {
+        const patient = r.patients.find(p => p.patientId === newPatientId);
+        if (patient) foundPatient = patient;
+      });
+      
+      if (foundPatient) {
+        room.patients[patientIndex] = foundPatient;
+        setEditedAllocation(updatedAllocation);
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (!editedAllocation) return;
+    
+    setIsSaving(true);
+    setSaveMessage(null);
+    
+    try {
+      const updatedResponse: SimulationResponse = {
+        ...results,
+        allocations: [editedAllocation]
+      };
+      
+      await updateAllocationFromResults(updatedResponse);
+      setSaveMessage({ type: 'success', text: 'Allocation saved successfully!' });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to save allocation:', error);
+      setSaveMessage({ type: 'error', text: 'Failed to save allocation. Please try again.' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getAllPatients = (): Patient[] => {
+    if (!editedAllocation) return [];
+    const patients: Patient[] = [];
+    Object.values(editedAllocation).forEach(room => {
+      room.patients.forEach(patient => {
+        if (!patients.find(p => p.patientId === patient.patientId)) {
+          patients.push(patient);
+        }
+      });
+    });
+    return patients;
+  };
+
+  const displayAllocation = isEditing ? editedAllocation : currentDayAllocation;
+  const allPatients = getAllPatients();
 
   return (
     <Container className="p-3 border rounded shadow-sm mt-3" style={{ maxWidth: "1400px" }}>
-      <h4>Results</h4>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4>Results</h4>
+        {totalDays > 0 && (
+          <div>
+            <Button 
+              variant={isEditing ? "secondary" : "primary"} 
+              onClick={handleEditToggle}
+              disabled={isSaving}
+              className="me-2"
+            >
+              {isEditing ? "Cancel" : "Edit"}
+            </Button>
+            {isEditing && (
+              <Button 
+                variant="success" 
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {saveMessage && (
+        <Alert variant={saveMessage.type === 'success' ? 'success' : 'danger'} dismissible onClose={() => setSaveMessage(null)}>
+          {saveMessage.text}
+        </Alert>
+      )}
+      
       {totalDays > 0 ? (
         <>
           <div className="mb-3">
-            <h5>Hour {currentPage}</h5>
+            <h5>Allocation Results</h5>
             <div className="text-muted mb-2">
               Total changes: {results.changes}
             </div>
@@ -99,15 +147,29 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {currentDayAllocation &&
-                  Object.entries(currentDayAllocation).map(([roomId, room]) => (
+                {displayAllocation &&
+                  Object.entries(displayAllocation).map(([roomId, room]) => (
                     <tr key={roomId}>
                       <td>{Number(roomId) + 1}</td>
                       <td>{room.gender}</td>
                       <td>
                         {room.patients.map((patient, patientIndex) => (
-                          <div key={patientIndex}>
-                            {patient.patientName} {patient.patientSurname}
+                          <div key={patientIndex} className="mb-2">
+                            {isEditing ? (
+                              <Form.Select
+                                value={patient.patientId}
+                                onChange={(e) => handlePatientChange(roomId, patientIndex, e.target.value)}
+                                size="sm"
+                              >
+                                {allPatients.map((p) => (
+                                  <option key={p.patientId} value={p.patientId}>
+                                    {p.patientName} {p.patientSurname} ({p.patientId})
+                                  </option>
+                                ))}
+                              </Form.Select>
+                            ) : (
+                              <span>{patient.patientName} {patient.patientSurname}</span>
+                            )}
                           </div>
                         ))}
                       </td>
@@ -116,7 +178,6 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
               </tbody>
             </Table>
           </div>
-          {renderPagination()}
         </>
       ) : (
         <p>No results available. Run a simulation to see results.</p>

@@ -12,6 +12,15 @@ const Allocations = () => {
     const fetchData = async () => {
       try {
         const data = await getPatientAllocationData();
+        console.log("Raw API response:", data);
+        console.log("Response type:", typeof data);
+        console.log("Is array:", Array.isArray(data));
+        if (Array.isArray(data)) {
+          console.log("Array length:", data.length);
+          if (data.length > 0) {
+            console.log("First item:", data[0]);
+          }
+        }
         setPatientData(data);
       } catch (error) {
         console.error("Error fetching data:", error);
