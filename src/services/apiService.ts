@@ -77,9 +77,27 @@ export const getPatientData = async () => {
   return response.data;
 };
 
-export const getPatientAllocationData = () => {
+export const getPatientAllocationData = async () => {
   const url = completeUrl + '/api/v1/patient-allocations';
-  return fetchData(url);
+  try {
+    const response = await axios.get(url);
+    console.log("Raw response from API:", response);
+    console.log("Response data:", response.data);
+    console.log("Response data type:", typeof response.data);
+    console.log("Response headers:", response.headers);
+    
+    // Check if response is a string (toString() representation)
+    if (typeof response.data === 'string') {
+      console.error("API returned a string instead of JSON! This is a backend issue.");
+      console.error("String content:", response.data.substring(0, 500));
+      throw new Error("Backend is returning malformed data (Java toString() instead of JSON)");
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching patient allocation data:", error);
+    throw error;
+  }
 }
 
 export const getTreatmentData = () => {
@@ -131,56 +149,50 @@ const transformSimulationResponse = async (response: any): Promise<SimulationRes
   // Fetch all rooms once
   const allRooms: Room[] = await getRoomData();
 
-  const allocations = response.data.allocations.slice(1).map((dayAllocation: any[]) => {
+  console.log("Raw response.data:", response.data);
+  console.log("Raw response.data.allocations:", response.data.allocations);
+  console.log("Allocations length:", response.data.allocations?.length);
+  console.log("First allocation:", response.data.allocations?.[0]);
+
+  const allocations = response.data.allocations.map((dayAllocation: any[]) => {
     const transformedDay: DayAllocation = {};
+    console.log("Processing dayAllocation:", dayAllocation);
+    console.log("dayAllocation length:", dayAllocation?.length);
 
-    // Process all rooms in the day allocation
-    dayAllocation.forEach((roomContainer: any, index: number) => {
-      // Ensure roomContainer is valid and has at least one key
-      if (roomContainer && Object.keys(roomContainer).length > 0) {
-        const roomKey = Object.keys(roomContainer)[0];
-        const roomObj = roomContainer[roomKey];
+    // Process all rooms in the day allocation (new JSON format from DTO)
+    dayAllocation.forEach((roomAllocationItem: any) => {
+      console.log("Processing roomAllocationItem:", roomAllocationItem);
+      
+      // Unwrap if it's an array with a single element
+      const item = Array.isArray(roomAllocationItem) ? roomAllocationItem[0] : roomAllocationItem;
+      
+      // The backend now returns RoomAllocationItem objects with direct properties
+      if (item && item.roomNumber !== undefined) {
+        const roomNumber = item.roomNumber;
+        const wardName = item.wardName;
+        const hospitalCode = item.hospitalCode;
 
-        // Ensure roomObj is not null or undefined
-        if (roomObj) {
-          try {
-            // Extract room details from the roomKey string
-            const match = roomKey.match(/WardRoom\(roomNumber\s*=\s*(\d+),\s*wardName\s*=\s*([^,]+),\s*hospitalCode\s*=\s*([^)]+)\)/);
-            console.log(`Processing roomKey: ${roomKey}`);
-            console.debug(`Processing roomKey: ${roomKey}`);
-            if (match) {
-              const roomNumber = parseInt(match[1], 10);
-              const wardName = match[2].trim();
-              const hospitalCode = match[3].trim();
+        // Find the Room object corresponding to the details
+        const roomData = allRooms.find(
+          (room) =>
+            room.roomNumber === roomNumber &&
+            room.treatmentWard.wardName === wardName &&
+            room.hospital.hospitalCode === hospitalCode
+        );
 
-              // Find the Room object corresponding to the extracted details
-              const roomData = allRooms.find(
-                (room) =>
-                  room.roomNumber === roomNumber &&
-                  room.treatmentWard.wardName === wardName &&
-                  room.hospital.hospitalCode === hospitalCode
-              );
-
-              if (roomData) {
-                transformedDay[roomData.roomNumber] = {
-                  gender: roomObj.patients && roomObj.patients.length > 0 ? roomObj.gender || "Unknown" : "",
-                  patients: roomObj.patients || [],
-                  roomDetails: roomData
-                };
-              } else {
-                console.warn(`Room not found for details: roomNumber=${roomNumber}, wardName=${wardName}, hospitalCode=${hospitalCode}`);
-              }
-            } else {
-              console.error(`Invalid roomKey format: ${roomKey}`);
-            }
-          } catch (error) {
-            console.error(`Failed to process roomKey: ${roomKey}`, error);
-          }
+        if (roomData) {
+          transformedDay[roomData.roomNumber] = {
+            gender: item.patients && item.patients.length > 0 
+              ? item.gender || "Unknown" 
+              : "",
+            patients: item.patients || [],
+            roomDetails: roomData
+          };
         } else {
-          console.warn(`Room object is null for roomKey: ${roomKey}`);
+          console.warn(`Room not found for details: roomNumber=${roomNumber}, wardName=${wardName}, hospitalCode=${hospitalCode}`);
         }
       } else {
-        console.warn(`Invalid roomContainer at index ${index}:`, roomContainer);
+        console.warn(`Invalid roomAllocationItem:`, item);
       }
     });
 
@@ -215,4 +227,9 @@ export const postMultiSimulationScenario = async (simulationRequest: MultiSimula
   const url = completeUrl + '/api/v1/simulation/simulate-many';
   const response = await axios.post(url, simulationRequest);
   return transformSimulationResponse(response);
+}
+
+export const updateAllocationFromResults = async (simulationResponse: SimulationResponse): Promise<void> => {
+  const url = completeUrl + '/api/v1/patient-allocations/update-from-allocation';
+  await axios.put(url, simulationResponse);
 }
