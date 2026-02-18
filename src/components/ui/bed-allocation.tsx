@@ -35,7 +35,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const [isAllocating, setIsAllocating] = useState(false);
   const [selfAdaptive, setSelfAdaptive] = useState(true);
 
-  const [selectedWard, setSelectedWard] = useState<string>("");
+  const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,10 +43,9 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
         const wardData: Ward[] = await getWardData();
         setWardData(wardData);
   
-        // Automatically select the first ward if only one exists
-        if (wardData.length === 1) {
-          const firstWard = wardData[0];
-          setSelectedWard(`${firstWard.wardName} - ${firstWard.wardHospital.hospitalCode}`);
+        // Automatically select the first ward as default
+        if (wardData.length >= 1) {
+          setSelectedWard(wardData[0]);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -131,7 +130,6 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
 
   const allocatePatients = () => {
     console.log("Allocating patients:", patients);
-    const [selectedWardName, selectedHospitalCode] = selectedWard.split(" - ");
   
     // Transform patients into ScenarioRequest format
     const scenarioRequests = patients.map((patient, _) => ({
@@ -145,9 +143,9 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       scenario: scenarioRequests,
       mode: "worst",
       smtMode: "changes",
-      wardName: selectedWardName,
-      hospitalCode: selectedHospitalCode,
-      adaptiveCapacity: selfAdaptive,
+      wardName: selectedWard?.wardName ?? "",
+      hospitalCode: selectedWard?.wardHospital.hospitalCode ?? "",
+      adaptive: selfAdaptive,
     };
   
     setIsAllocating(true);
@@ -161,6 +159,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       .catch(error => {
         console.error("Simulation failed:", error);
         alert("Allocation failed. Please try again.");
+        console.error("Request payload:", request);
       })
       .finally(() => {
         setIsAllocating(false);
@@ -193,11 +192,11 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
             <Form.Group>
               <Form.Label>Ward</Form.Label>
               <Form.Select
-                value={selectedWard}
+                value={selectedWard ? `${selectedWard.wardName} - ${selectedWard.wardHospital.hospitalCode}` : ""}
                 onChange={(e) => {
-                  console.log("Selected value:", e.target.value);
-                  setSelectedWard(e.target.value)}
-                }
+                  const ward = wardData?.find(w => `${w.wardName} - ${w.wardHospital.hospitalCode}` === e.target.value) ?? null;
+                  setSelectedWard(ward);
+                }}
               >
                 {wardData && wardData.map((ward) => (
                   <option key={ward.wardName} value={`${ward.wardName} - ${ward.wardHospital.hospitalCode}`}>

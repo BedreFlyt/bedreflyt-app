@@ -21,9 +21,9 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [activeWard, setActiveWard] = useState<string>("");
 
-  // allocations[0] is the first (and only) outer list, [0] again gives the flat list of rooms
+  // allocations[0] = first scenario/batch; .flat() merges all per-ward sub-arrays into one list
   const currentRooms = useMemo<RoomAllocationDTO[]>(
-    () => results?.allocations?.[0]?.[0] ?? [],
+    () => results?.allocations?.[0]?.flat() ?? [],
     [results]
   );
 

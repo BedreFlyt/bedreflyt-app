@@ -178,7 +178,7 @@ export type AllocationRequest = {
   smtMode?: string;
   wardName: string;
   hospitalCode: string;
-  adaptiveCapacity: boolean;
+  adaptive: boolean;
 }
 
 export type MultiSimulationRequest = {
