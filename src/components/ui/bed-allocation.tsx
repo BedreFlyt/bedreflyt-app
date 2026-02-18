@@ -3,7 +3,7 @@ import { Button, ListGroup, Card, Row, Col, Form } from "react-bootstrap";
 
 import { FaPlus, FaTrash } from "react-icons/fa";
 
-import { Patient, Treatment, Ward, SimulationRequest, SimulationResponse } from "../../types/types";
+import { Patient, Treatment, Ward, AllocationRequest, SimulationResponse } from "../../types/types";
 import { getWardData, postAllocation } from "../../services/apiService.ts";
 import SearchModal from "./search-modal.tsx";
 import PatientDistribution from "./patients-distribution.tsx";
@@ -33,6 +33,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const [results, setResults] = useState<SimulationResponse>({ allocations: [], changes: 0 });
   const [wardData, setWardData] = useState<Ward[] | undefined>(undefined);
   const [isAllocating, setIsAllocating] = useState(false);
+  const [selfAdaptive, setSelfAdaptive] = useState(true);
 
   const [selectedWard, setSelectedWard] = useState<string>("");
 
@@ -139,13 +140,14 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       diagnosis: patient.treatment.diagnosis.diagnosisName,
     }));
   
-    // Create the SimulationRequest object
-    const request: SimulationRequest = {
+    // Create the AllocationRequest object
+    const request: AllocationRequest = {
       scenario: scenarioRequests,
       mode: "worst",
       smtMode: "changes",
       wardName: selectedWardName,
       hospitalCode: selectedHospitalCode,
+      adaptiveCapacity: selfAdaptive,
     };
   
     setIsAllocating(true);
@@ -204,6 +206,15 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
                 ))}
               </Form.Select>
             </Form.Group>
+          </Col>
+          <Col xs="auto" className="d-flex align-items-end">
+            <Form.Check
+              type="checkbox"
+              id="self-adaptive-checkbox"
+              label="Self-adaptive allocation"
+              checked={selfAdaptive}
+              onChange={(e) => setSelfAdaptive(e.target.checked)}
+            />
           </Col>
         </Row>
 
