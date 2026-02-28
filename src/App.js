@@ -26,8 +26,8 @@ function App() {
             <Route path="/patients" element={<Patients />} />
             <Route path="/bed-allocation" element={<BedAllocation />} />
             <Route path="/inspect" element={<DataInspector />} />
-            <Route path="/docs" element={<ApiDocumentation />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/docs" element={<ApiDocumentation />} />
           </Routes>
         </div>
       </div>
