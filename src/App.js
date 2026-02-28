@@ -3,6 +3,7 @@ import './App.css';
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 
+import { NotificationProvider } from './context/NotificationContext.tsx';
 import CustomSidebar from './components/ui/sidebar.tsx';
 import CustomNavbar from './components/ui/navbar.tsx';
 
@@ -11,22 +12,26 @@ import Patients from './pages/patients.tsx';
 import BedAllocation from './pages/bed-allocation.tsx';
 import DataInspector from './pages/inspect-data.tsx';
 import ApiDocumentation from './pages/api-documentation.tsx';
+import Orders from './pages/orders.tsx';
 
 function App() {
   return (
-    <div className="App">
-      <CustomSidebar />
-      <CustomNavbar />
-      <div style={{ marginLeft: '65px' }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/patients" element={<Patients />} />
-          <Route path="/bed-allocation" element={<BedAllocation />} />
-          <Route path="/inspect" element={<DataInspector />} />
-          <Route path="/docs" element={<ApiDocumentation />} />
-        </Routes>
+    <NotificationProvider>
+      <div className="App">
+        <CustomSidebar />
+        <CustomNavbar />
+        <div style={{ marginLeft: '65px' }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/patients" element={<Patients />} />
+            <Route path="/bed-allocation" element={<BedAllocation />} />
+            <Route path="/inspect" element={<DataInspector />} />
+            <Route path="/docs" element={<ApiDocumentation />} />
+            <Route path="/orders" element={<Orders />} />
+          </Routes>
+        </div>
       </div>
-    </div>
+    </NotificationProvider>
   );
 }
 

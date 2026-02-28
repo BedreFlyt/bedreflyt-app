@@ -249,7 +249,7 @@ export const orderColumns = [
   { header: "Created At",     accessor: "createdAt" },
 ]
 
-// Notification event pushed by the supplies.order Kafka topic
+// Notification event pushed by the supply.order Kafka topic
 export type SupplyOrderEvent = {
   id: string;                    // unique client-side id
   payload: Order;
