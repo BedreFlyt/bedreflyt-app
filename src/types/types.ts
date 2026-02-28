@@ -214,3 +214,45 @@ export type SimulationResponse = {
   allocations: RoomAllocationDTO[][][];
   changes: number;
 }
+
+// ──────────────────────────────────────────────
+// Supply / Order types (SBL service)
+// ──────────────────────────────────────────────
+
+export type InventoryItem = {
+  id: number | null;
+  date: string | null;           // LocalDate → ISO string
+  itemId: number;
+  itemType: string;
+  itemName: string;
+  currentStock: number;
+  minRequired: number;
+  maxCapacity: number;
+  unitCost: number;
+  avgUsagePerDay: number;
+  restockLeadTime: number;
+  vendorId: string;
+}
+
+export type Order = {
+  id: number | null;
+  inventoryItem: InventoryItem;
+  numberToOrder: number;
+  createdAt: string;             // LocalDateTime → ISO string
+}
+
+export const orderColumns = [
+  { header: "ID",             accessor: "id" },
+  { header: "Item Name",      accessor: "inventoryItem.itemName" },
+  { header: "Item Type",      accessor: "inventoryItem.itemType" },
+  { header: "Qty to Order",   accessor: "numberToOrder" },
+  { header: "Created At",     accessor: "createdAt" },
+]
+
+// Notification event pushed by the supplies.order Kafka topic
+export type SupplyOrderEvent = {
+  id: string;                    // unique client-side id
+  payload: Order;
+  receivedAt: string;            // ISO timestamp
+  read: boolean;
+}
