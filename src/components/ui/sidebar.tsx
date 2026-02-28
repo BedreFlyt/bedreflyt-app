@@ -8,6 +8,7 @@ import DoctorIcon from '../../assets/icons/bedreflyt-icon-doctor.webp';
 import UserIcon from '../../assets/icons/bedreflyt-icon-user.webp';
 import HospitalIcon from '../../assets/icons/bedreflyt-icon-hospital.webp';
 import ApiIcon from '../../assets/icons/bedreflyt-icon-api.webp';
+import CartIcon from '../../assets/icons/cart-icon.webp';
 
 const CustomSidebar = () => {
   const [expanded, setExpanded] = useState(false);
@@ -33,6 +34,7 @@ const CustomSidebar = () => {
           { id: "5", text: "Bed allocation", icon: BedIcon, link: "/bed-allocation" },
           { id: "6", text: "Browse data", icon: SearchIcon, link: "/inspect" },
           { id: "7", text: "API inspection", icon: ApiIcon, link: "/docs" },
+          { id: "8", text: "Orders", icon: CartIcon, link: "/orders" },
         ].map((item) => (
           <Nav.Link key={item.id} href={item.link} className="sidebar-item">
             <img src={item.icon} alt={item.text} height="30" className="icon" />
