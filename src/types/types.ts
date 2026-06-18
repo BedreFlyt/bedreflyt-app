@@ -172,6 +172,15 @@ export type SimulationRequest = {
   hospitalCode: string;
 }
 
+export type AllocationRequest = {
+  scenario: ScenarioRequest[];
+  mode: string;
+  smtMode?: string;
+  wardName: string;
+  hospitalCode: string;
+  adaptive: boolean;
+}
+
 export type MultiSimulationRequest = {
   scenario: ScenarioRequest[];
   repetitions: number;
@@ -191,7 +200,17 @@ export type DayAllocation = {
   [key: string]: WardRoom;
 }
 
+export type RoomAllocationDTO = {
+  roomNumber: number;
+  wardName: string;
+  hospitalCode: string;
+  patients: Patient[];
+  gender: string;
+}
+
+export type AllocationResponse = SimulationResponse;
+
 export type SimulationResponse = {
-  allocations: DayAllocation[];
+  allocations: RoomAllocationDTO[][][];
   changes: number;
 }

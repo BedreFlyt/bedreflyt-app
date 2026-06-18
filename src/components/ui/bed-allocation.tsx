@@ -3,7 +3,7 @@ import { Button, ListGroup, Card, Row, Col, Form } from "react-bootstrap";
 
 import { FaPlus, FaTrash } from "react-icons/fa";
 
-import { Patient, Treatment, Ward, SimulationRequest, SimulationResponse } from "../../types/types";
+import { Patient, Treatment, Ward, AllocationRequest, SimulationResponse } from "../../types/types";
 import { getWardData, postAllocation } from "../../services/apiService.ts";
 import SearchModal from "./search-modal.tsx";
 import PatientDistribution from "./patients-distribution.tsx";
@@ -33,8 +33,9 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
   const [results, setResults] = useState<SimulationResponse>({ allocations: [], changes: 0 });
   const [wardData, setWardData] = useState<Ward[] | undefined>(undefined);
   const [isAllocating, setIsAllocating] = useState(false);
+  const [selfAdaptive, setSelfAdaptive] = useState(true);
 
-  const [selectedWard, setSelectedWard] = useState<string>("");
+  const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,10 +43,9 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
         const wardData: Ward[] = await getWardData();
         setWardData(wardData);
   
-        // Automatically select the first ward if only one exists
-        if (wardData.length === 1) {
-          const firstWard = wardData[0];
-          setSelectedWard(`${firstWard.wardName} - ${firstWard.wardHospital.hospitalCode}`);
+        // Automatically select the first ward as default
+        if (wardData.length >= 1) {
+          setSelectedWard(wardData[0]);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -130,7 +130,6 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
 
   const allocatePatients = () => {
     console.log("Allocating patients:", patients);
-    const [selectedWardName, selectedHospitalCode] = selectedWard.split(" - ");
   
     // Transform patients into ScenarioRequest format
     const scenarioRequests = patients.map((patient, _) => ({
@@ -139,13 +138,14 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       diagnosis: patient.treatment.diagnosis.diagnosisName,
     }));
   
-    // Create the SimulationRequest object
-    const request: SimulationRequest = {
+    // Create the AllocationRequest object
+    const request: AllocationRequest = {
       scenario: scenarioRequests,
       mode: "worst",
       smtMode: "changes",
-      wardName: selectedWardName,
-      hospitalCode: selectedHospitalCode,
+      wardName: selectedWard?.wardName ?? "",
+      hospitalCode: selectedWard?.wardHospital.hospitalCode ?? "",
+      adaptive: selfAdaptive,
     };
   
     setIsAllocating(true);
@@ -159,6 +159,7 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
       .catch(error => {
         console.error("Simulation failed:", error);
         alert("Allocation failed. Please try again.");
+        console.error("Request payload:", request);
       })
       .finally(() => {
         setIsAllocating(false);
@@ -191,11 +192,11 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
             <Form.Group>
               <Form.Label>Ward</Form.Label>
               <Form.Select
-                value={selectedWard}
+                value={selectedWard ? `${selectedWard.wardName} - ${selectedWard.wardHospital.hospitalCode}` : ""}
                 onChange={(e) => {
-                  console.log("Selected value:", e.target.value);
-                  setSelectedWard(e.target.value)}
-                }
+                  const ward = wardData?.find(w => `${w.wardName} - ${w.wardHospital.hospitalCode}` === e.target.value) ?? null;
+                  setSelectedWard(ward);
+                }}
               >
                 {wardData && wardData.map((ward) => (
                   <option key={ward.wardName} value={`${ward.wardName} - ${ward.wardHospital.hospitalCode}`}>
@@ -204,6 +205,15 @@ const AllocationPanel: React.FC<AllocationPanelProps> = ({
                 ))}
               </Form.Select>
             </Form.Group>
+          </Col>
+          <Col xs="auto" className="d-flex align-items-end">
+            <Form.Check
+              type="checkbox"
+              id="self-adaptive-checkbox"
+              label="Self-adaptive allocation"
+              checked={selfAdaptive}
+              onChange={(e) => setSelfAdaptive(e.target.checked)}
+            />
           </Col>
         </Row>
 

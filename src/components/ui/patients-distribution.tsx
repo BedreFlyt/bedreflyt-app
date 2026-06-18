@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Container, Table, Button, Form, Alert } from "react-bootstrap";
-import { FaTrash, FaPlus } from "react-icons/fa";
-import { SimulationResponse, DayAllocation, Patient } from "../../types/types";
+import React, { useState, useEffect, useMemo } from "react";
+import { Container, Table, Button, Form, Alert, Nav, Tab } from "react-bootstrap";
+import { FaTrash } from "react-icons/fa";
+import { SimulationResponse, RoomAllocationDTO, Patient } from "../../types/types";
 import { updateAllocationFromResults } from "../../services/apiService.ts";
 
 interface SimulationResultsProps {
@@ -16,157 +16,216 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
   setCurrentPage,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedAllocation, setEditedAllocation] = useState<DayAllocation | null>(null);
+  const [editedRooms, setEditedRooms] = useState<RoomAllocationDTO[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  
-  // Only display the first allocation
-  const currentDayAllocation = results?.allocations?.[0];
-  const totalDays = 1; // Always show only first allocation
+  const [activeWard, setActiveWard] = useState<string>("");
+
+  // allocations[0] = first scenario/batch; .flat() merges all per-ward sub-arrays into one list
+  const currentRooms = useMemo<RoomAllocationDTO[]>(
+    () => results?.allocations?.[0]?.flat() ?? [],
+    [results]
+  );
+
+  // Derive sorted unique ward names
+  const wardNames = useMemo<string[]>(
+    () => Array.from(new Set(currentRooms.map((r) => r.wardName))).sort(),
+    [currentRooms]
+  );
 
   useEffect(() => {
-    if (currentDayAllocation && !isEditing) {
-      setEditedAllocation(JSON.parse(JSON.stringify(currentDayAllocation)));
+    if (wardNames.length > 0 && !activeWard) {
+      setActiveWard(wardNames[0]);
     }
-  }, [currentDayAllocation, isEditing]);
+  }, [wardNames, activeWard]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setEditedRooms(JSON.parse(JSON.stringify(currentRooms)));
+    }
+  }, [currentRooms, isEditing]);
 
   const handleEditToggle = () => {
     if (isEditing) {
-      // Cancel editing - reset to original
-      setEditedAllocation(JSON.parse(JSON.stringify(currentDayAllocation)));
+      setEditedRooms(JSON.parse(JSON.stringify(currentRooms)));
     }
     setIsEditing(!isEditing);
     setSaveMessage(null);
   };
 
-  const handlePatientChange = (roomId: string, patientIndex: number, newPatientId: string) => {
-    if (!editedAllocation) return;
-    
-    const updatedAllocation = { ...editedAllocation };
-    const room = updatedAllocation[roomId];
-    
-    if (room && room.patients[patientIndex]) {
-      // Find the patient from all rooms
-      let foundPatient: Patient | null = null;
-      Object.values(editedAllocation).forEach(r => {
-        const patient = r.patients.find(p => p.patientId === newPatientId);
-        if (patient) foundPatient = patient;
-      });
-      
-      if (foundPatient) {
-        room.patients[patientIndex] = foundPatient;
-        setEditedAllocation(updatedAllocation);
-      }
-    }
-  };
+  const getRoomKey = (room: RoomAllocationDTO) =>
+    `${room.wardName}-${room.roomNumber}`;
 
-  const handleRemovePatient = (roomId: string, patientIndex: number) => {
-    if (!editedAllocation) return;
-    
-    const updatedAllocation = { ...editedAllocation };
-    const room = updatedAllocation[roomId];
-    
-    if (room) {
-      room.patients.splice(patientIndex, 1);
-      setEditedAllocation(updatedAllocation);
-    }
-  };
-
-  const handleAddPatient = (roomId: string, patientId: string) => {
-    if (!editedAllocation) return;
-    
-    const updatedAllocation = { ...editedAllocation };
-    const room = updatedAllocation[roomId];
-    
-    // Find the patient from all rooms
-    let foundPatient: Patient | null = null;
-    Object.values(editedAllocation).forEach(r => {
-      const patient = r.patients.find(p => p.patientId === patientId);
-      if (patient) foundPatient = patient;
+  const handlePatientChange = (roomKey: string, patientIndex: number, newPatientId: string) => {
+    const updated = editedRooms.map((room) => {
+      if (getRoomKey(room) !== roomKey) return room;
+      const newPatients = [...room.patients];
+      const found = getAllPatients(currentRooms).find((p) => p.patientId === newPatientId);
+      if (found) newPatients[patientIndex] = found;
+      return { ...room, patients: newPatients };
     });
-    
-    if (room && foundPatient) {
-      room.patients.push(foundPatient);
-      setEditedAllocation(updatedAllocation);
-    }
+    setEditedRooms(updated);
   };
 
-  const getAvailablePatientsForRoom = (roomId: string, currentPatientId?: string): Patient[] => {
-    if (!editedAllocation) return [];
-    const room = editedAllocation[roomId];
-    // Get all patient IDs in this room, excluding the current patient being edited
-    const roomPatientIds = new Set(
-      room?.patients
-        .map(p => p.patientId)
-        .filter(id => id !== currentPatientId) || []
+  const handleRemovePatient = (roomKey: string, patientIndex: number) => {
+    const updated = editedRooms.map((room) => {
+      if (getRoomKey(room) !== roomKey) return room;
+      const newPatients = room.patients.filter((_, i) => i !== patientIndex);
+      return { ...room, patients: newPatients };
+    });
+    setEditedRooms(updated);
+  };
+
+  const handleAddPatient = (roomKey: string, patientId: string) => {
+    const found = getAllPatients(currentRooms).find((p) => p.patientId === patientId);
+    if (!found) return;
+    const updated = editedRooms.map((room) => {
+      if (getRoomKey(room) !== roomKey) return room;
+      return { ...room, patients: [...room.patients, found] };
+    });
+    setEditedRooms(updated);
+  };
+
+  const getAllPatients = (rooms: RoomAllocationDTO[]): Patient[] => {
+    const seen = new Set<string>();
+    const patients: Patient[] = [];
+    rooms.forEach((room) =>
+      room.patients.forEach((p) => {
+        if (!seen.has(p.patientId)) {
+          seen.add(p.patientId);
+          patients.push(p);
+        }
+      })
     );
-    return allPatients.filter(p => !roomPatientIds.has(p.patientId));
+    return patients;
+  };
+
+  const getAvailablePatientsForRoom = (
+    roomKey: string,
+    excludePatientId?: string
+  ): Patient[] => {
+    const room = editedRooms.find((r) => getRoomKey(r) === roomKey);
+    const occupiedIds = new Set(
+      room?.patients.map((p) => p.patientId).filter((id) => id !== excludePatientId) ?? []
+    );
+    return getAllPatients(currentRooms).filter((p) => !occupiedIds.has(p.patientId));
   };
 
   const handleSave = async () => {
-    if (!editedAllocation) return;
-    
     setIsSaving(true);
     setSaveMessage(null);
-    
     try {
-      // Transform the edited allocation back to the format expected by the backend
-      const transformedAllocation = Object.entries(editedAllocation).map(([roomId, roomData]) => {
-        return {
-          roomNumber: roomData.roomDetails.roomNumber,
-          wardName: roomData.roomDetails.treatmentWard.wardName,
-          hospitalCode: roomData.roomDetails.hospital.hospitalCode,
-          patients: roomData.patients,
-          gender: roomData.gender
-        };
-      });
-
       const updatedResponse = {
-        allocations: [[transformedAllocation]],
-        changes: results.changes
+        allocations: [[editedRooms]],
+        changes: results.changes,
       };
-      
       console.log("Sending updated allocation:", updatedResponse);
-      // Backend expects the DTO format with RoomAllocationItem[], not DayAllocation
       await updateAllocationFromResults(updatedResponse as any);
       setSaveMessage({ type: 'success', text: 'Allocation saved successfully!' });
       setIsEditing(false);
     } catch (error: any) {
       console.error('Failed to save allocation:', error);
-      console.error('Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to save allocation. Please try again.';
+      const errorMessage =
+        error.response?.data?.message || error.message || 'Failed to save allocation. Please try again.';
       setSaveMessage({ type: 'error', text: errorMessage });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const getAllPatients = (): Patient[] => {
-    // Get all unique patients from the ORIGINAL allocation (not edited)
-    // This ensures we have access to all patients even if they're removed from rooms
-    if (!currentDayAllocation) return [];
-    const patients: Patient[] = [];
-    Object.values(currentDayAllocation).forEach(room => {
-      room.patients.forEach(patient => {
-        if (!patients.find(p => p.patientId === patient.patientId)) {
-          patients.push(patient);
-        }
-      });
-    });
-    return patients;
-  };
+  const displayRooms = isEditing ? editedRooms : currentRooms;
+  const hasResults = currentRooms.length > 0;
 
-  const displayAllocation = isEditing ? editedAllocation : currentDayAllocation;
-  const allPatients = getAllPatients();
+  const renderRoomTable = (rooms: RoomAllocationDTO[]) => (
+    <Table striped bordered hover>
+      <thead>
+        <tr>
+          <th>Room</th>
+          <th>Gender</th>
+          <th>Patients</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rooms.map((room) => {
+          const roomKey = getRoomKey(room);
+          return (
+            <tr key={roomKey}>
+              <td>{room.roomNumber}</td>
+              <td>{room.gender}</td>
+              <td>
+                {room.patients.map((patient, patientIndex) => (
+                  <div key={patientIndex} className="mb-2 d-flex align-items-center gap-2">
+                    {isEditing ? (
+                      <>
+                        <Form.Select
+                          value={patient.patientId}
+                          onChange={(e) =>
+                            handlePatientChange(roomKey, patientIndex, e.target.value)
+                          }
+                          size="sm"
+                          className="flex-grow-1"
+                        >
+                          <option value={patient.patientId}>
+                            {patient.patientName} {patient.patientSurname} ({patient.patientId})
+                          </option>
+                          {getAvailablePatientsForRoom(roomKey, patient.patientId).map((p) => (
+                            <option key={p.patientId} value={p.patientId}>
+                              {p.patientName} {p.patientSurname} ({p.patientId})
+                            </option>
+                          ))}
+                        </Form.Select>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleRemovePatient(roomKey, patientIndex)}
+                        >
+                          <FaTrash />
+                        </Button>
+                      </>
+                    ) : (
+                      <span>
+                        {patient.patientName} {patient.patientSurname}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {isEditing && getAvailablePatientsForRoom(roomKey).length > 0 && (
+                  <div className="mt-2">
+                    <Form.Select
+                      size="sm"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleAddPatient(roomKey, e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <option value="">+ Add patient to room</option>
+                      {getAvailablePatientsForRoom(roomKey).map((p) => (
+                        <option key={p.patientId} value={p.patientId}>
+                          {p.patientName} {p.patientSurname} ({p.patientId})
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </div>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </Table>
+  );
 
   return (
     <Container className="p-3 border rounded shadow-sm mt-3" style={{ maxWidth: "1400px" }}>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4>Results</h4>
-        {totalDays > 0 && (
+        {hasResults && (
           <div>
-            <Button 
-              variant={isEditing ? "secondary" : "primary"} 
+            <Button
+              variant={isEditing ? "secondary" : "primary"}
               onClick={handleEditToggle}
               disabled={isSaving}
               className="me-2"
@@ -174,102 +233,45 @@ const PatientDistribution: React.FC<SimulationResultsProps> = ({
               {isEditing ? "Cancel" : "Edit"}
             </Button>
             {isEditing && (
-              <Button 
-                variant="success" 
-                onClick={handleSave}
-                disabled={isSaving}
-              >
+              <Button variant="success" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save"}
               </Button>
             )}
           </div>
         )}
       </div>
-      
+
       {saveMessage && (
-        <Alert variant={saveMessage.type === 'success' ? 'success' : 'danger'} dismissible onClose={() => setSaveMessage(null)}>
+        <Alert
+          variant={saveMessage.type === 'success' ? 'success' : 'danger'}
+          dismissible
+          onClose={() => setSaveMessage(null)}
+        >
           {saveMessage.text}
         </Alert>
       )}
-      
-      {totalDays > 0 ? (
+
+      {hasResults ? (
         <>
-          <div className="mb-3">
-            <h5>Allocation Results</h5>
-            <div className="text-muted mb-2">
-              Total changes: {results.changes}
-            </div>
-            <Table striped bordered hover>
-              <thead>
-                <tr>
-                  <th>Room</th>
-                  <th>Gender</th>
-                  <th>Patients</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayAllocation &&
-                  Object.entries(displayAllocation).map(([roomId, room]) => (
-                    <tr key={roomId}>
-                      <td>{Number(roomId) + 1}</td>
-                      <td>{room.gender}</td>
-                      <td>
-                        {room.patients.map((patient, patientIndex) => (
-                          <div key={patientIndex} className="mb-2 d-flex align-items-center gap-2">
-                            {isEditing ? (
-                              <>
-                                <Form.Select
-                                  value={patient.patientId}
-                                  onChange={(e) => handlePatientChange(roomId, patientIndex, e.target.value)}
-                                  size="sm"
-                                  className="flex-grow-1"
-                                >
-                                  {getAvailablePatientsForRoom(roomId, patient.patientId).map((p) => (
-                                    <option key={p.patientId} value={p.patientId}>
-                                      {p.patientName} {p.patientSurname} ({p.patientId})
-                                    </option>
-                                  ))}
-                                </Form.Select>
-                                <Button 
-                                  variant="danger" 
-                                  size="sm"
-                                  onClick={() => handleRemovePatient(roomId, patientIndex)}
-                                >
-                                  <FaTrash />
-                                </Button>
-                              </>
-                            ) : (
-                              <span>{patient.patientName} {patient.patientSurname}</span>
-                            )}
-                          </div>
-                        ))}
-                        {isEditing && getAvailablePatientsForRoom(roomId).length > 0 && (
-                          <div className="mt-2">
-                            <Form.Select
-                              size="sm"
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  handleAddPatient(roomId, e.target.value);
-                                  e.target.value = '';
-                                }
-                              }}
-                              defaultValue=""
-                            >
-                              <option value="">+ Add patient to room</option>
-                              {getAvailablePatientsForRoom(roomId).map((p) => (
-                                <option key={p.patientId} value={p.patientId}>
-                                  {p.patientName} {p.patientSurname} ({p.patientId})
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </Table>
-          </div>
+          <div className="text-muted mb-3">Total changes: {results.changes}</div>
+          <Tab.Container activeKey={activeWard} onSelect={(k) => k && setActiveWard(k)}>
+            <Nav variant="tabs" className="mb-3">
+              {wardNames.map((ward) => (
+                <Nav.Item key={ward}>
+                  <Nav.Link eventKey={ward}>{ward}</Nav.Link>
+                </Nav.Item>
+              ))}
+            </Nav>
+            <Tab.Content>
+              {wardNames.map((ward) => (
+                <Tab.Pane key={ward} eventKey={ward}>
+                  {renderRoomTable(
+                    displayRooms.filter((r) => r.wardName === ward)
+                  )}
+                </Tab.Pane>
+              ))}
+            </Tab.Content>
+          </Tab.Container>
         </>
       ) : (
         <p>No results available. Run a simulation to see results.</p>

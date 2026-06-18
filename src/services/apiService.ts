@@ -1,12 +1,11 @@
 import axios from 'axios';
 import {
   SimulationRequest,
+  AllocationRequest,
   MultiSimulationRequest,
   SimulationResponse,
-  DayAllocation,
   Patient,
   PatientRequest,
-  Room
 } from '../types/types.ts';
 
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
@@ -145,69 +144,18 @@ export const getHospitalData = () => {
   return fetchData(url);
 }
 
-const transformSimulationResponse = async (response: any): Promise<SimulationResponse> => {
-  // Fetch all rooms once
-  const allRooms: Room[] = await getRoomData();
-
-  console.log("Raw response.data:", response.data);
-  console.log("Raw response.data.allocations:", response.data.allocations);
-  console.log("Allocations length:", response.data.allocations?.length);
-  console.log("First allocation:", response.data.allocations?.[0]);
-
-  const allocations = response.data.allocations.map((dayAllocation: any[]) => {
-    const transformedDay: DayAllocation = {};
-    console.log("Processing dayAllocation:", dayAllocation);
-    console.log("dayAllocation length:", dayAllocation?.length);
-
-    // Process all rooms in the day allocation (new JSON format from DTO)
-    dayAllocation.forEach((roomAllocationItem: any) => {
-      console.log("Processing roomAllocationItem:", roomAllocationItem);
-      
-      // Unwrap if it's an array with a single element
-      const item = Array.isArray(roomAllocationItem) ? roomAllocationItem[0] : roomAllocationItem;
-      
-      // The backend now returns RoomAllocationItem objects with direct properties
-      if (item && item.roomNumber !== undefined) {
-        const roomNumber = item.roomNumber;
-        const wardName = item.wardName;
-        const hospitalCode = item.hospitalCode;
-
-        // Find the Room object corresponding to the details
-        const roomData = allRooms.find(
-          (room) =>
-            room.roomNumber === roomNumber &&
-            room.treatmentWard.wardName === wardName &&
-            room.hospital.hospitalCode === hospitalCode
-        );
-
-        if (roomData) {
-          transformedDay[roomData.roomNumber] = {
-            gender: item.patients && item.patients.length > 0 
-              ? item.gender || "Unknown" 
-              : "",
-            patients: item.patients || [],
-            roomDetails: roomData
-          };
-        } else {
-          console.warn(`Room not found for details: roomNumber=${roomNumber}, wardName=${wardName}, hospitalCode=${hospitalCode}`);
-        }
-      } else {
-        console.warn(`Invalid roomAllocationItem:`, item);
-      }
-    });
-
-    return transformedDay;
-  });
-
+const transformSimulationResponse = (response: any): SimulationResponse => {
+  // The backend returns AllocationResponseDTO: { allocations: List<List<List<RoomAllocationDTO>>>, changes: Int }
+  // which maps directly to SimulationResponse — no client-side transformation needed.
   return {
-    allocations: allocations,
-    changes: response.data.changes || 0
+    allocations: response.data.allocations ?? [],
+    changes: response.data.changes ?? 0,
   };
 };
 
-export const postAllocation = async (simulationRequest: SimulationRequest): Promise<SimulationResponse> => {
+export const postAllocation = async (allocationRequest: AllocationRequest): Promise<SimulationResponse> => {
   const url = completeUrl + '/api/v1/allocation/allocate';
-  const response = await axios.post(url, simulationRequest);
+  const response = await axios.post(url, allocationRequest);
   return transformSimulationResponse(response);
 }
 
@@ -228,6 +176,7 @@ export const postMultiSimulationScenario = async (simulationRequest: MultiSimula
   const response = await axios.post(url, simulationRequest);
   return transformSimulationResponse(response);
 }
+
 
 export const updateAllocationFromResults = async (simulationResponse: SimulationResponse): Promise<void> => {
   const url = completeUrl + '/api/v1/patient-allocations/update-from-allocation';

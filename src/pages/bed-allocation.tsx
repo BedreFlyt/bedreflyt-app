@@ -33,7 +33,7 @@ const BedAllocation = () => {
         id="uncontrolled-tab-example"
         className="mb-3"
       >
-        <Tab eventKey="home" title="Self-Adaptive Allocation">
+        <Tab eventKey="home" title="Allocation">
           <AllocationPanel
             availablePatients={patients}
             treatments={treatments}
