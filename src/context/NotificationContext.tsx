@@ -9,8 +9,7 @@ import React, {
 import { SupplyOrderEvent, Order } from '../types/types.ts';
 
 const SBL_URL = process.env.REACT_APP_SBL_URL || 'http://localhost:8092';
-// The backend is expected to expose Kafka topic `supply.order` via SSE at this path
-const SSE_ENDPOINT = `${SBL_URL}/api/events/supply.order`;
+const SSE_ENDPOINT = `${SBL_URL}/api/sse/events?topics=supply.order`;
 
 // ──────────────────────────────────────────────
 // Context shape
@@ -40,31 +39,29 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [notifications, setNotifications] = useState<SupplyOrderEvent[]>([]);
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  // Subscribe to Kafka queue `supply.order` exposed as SSE by the SBL backend
   useEffect(() => {
     const connect = () => {
       const es = new EventSource(SSE_ENDPOINT);
       eventSourceRef.current = es;
 
-      es.onmessage = (event: MessageEvent) => {
+      es.addEventListener('supply.order', (event: MessageEvent) => {
         try {
-          const order: Order = JSON.parse(event.data);
-          const notification: SupplyOrderEvent = {
-            id: `${Date.now()}-${Math.random()}`,
+          const orders: Order[] = JSON.parse(event.data);
+          const newNotifications: SupplyOrderEvent[] = orders.map((order) => ({
+            id: `${order.id ?? Date.now()}-${Math.random()}`,
             payload: order,
             receivedAt: new Date().toISOString(),
             read: false,
-          };
-          setNotifications((prev) => [notification, ...prev]);
+          }));
+          setNotifications((prev) => [...newNotifications, ...prev]);
         } catch {
-          console.warn('[NotificationContext] Failed to parse SSE event:', event.data);
+          console.warn('[NotificationContext] Failed to parse supply.order SSE event:', event.data);
         }
-      };
+      });
 
       es.onerror = () => {
         console.warn('[NotificationContext] SSE connection lost, reconnecting in 5 s…');
         es.close();
-        // Attempt reconnect after 5 s
         setTimeout(connect, 5000);
       };
     };
