@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button, Nav } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
 import SearchIcon from '../../assets/icons/bedreflyt-icon-search.webp';
 import BedIcon from '../../assets/icons/bedreflyt-icon-bed.webp';
@@ -34,7 +35,12 @@ const CustomSidebar = () => {
           { id: "6", text: "Browse data", icon: SearchIcon, link: "/inspect" },
           { id: "7", text: "API inspection", icon: ApiIcon, link: "/docs" },
         ].map((item) => (
-          <Nav.Link key={item.id} href={item.link} className="sidebar-item">
+          <Nav.Link
+            key={item.id}
+            as={Link}
+            to={item.link}
+            className="sidebar-item"
+          >
             <img src={item.icon} alt={item.text} height="30" className="icon" />
             {expanded && <span className="text">{item.text}</span>}
           </Nav.Link>
